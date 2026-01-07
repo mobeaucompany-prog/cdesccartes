@@ -45,7 +45,7 @@ const Cart = () => {
         .from('orders')
         .insert({
           client_name: clientName,
-          items_list: items,
+          items_list: JSON.parse(JSON.stringify(items)),
           total_price: totalPrice,
           pickup_time: pickupTime,
           restaurant_id: restaurantId,
