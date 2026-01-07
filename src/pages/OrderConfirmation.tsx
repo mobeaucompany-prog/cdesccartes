@@ -3,41 +3,17 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Order, CartItem } from '@/types/database';
 import Header from '@/components/layout/Header';
+import OrderProgressBar from '@/components/order/OrderProgressBar';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CheckCircle2, Clock, XCircle, Loader2, Home, Package } from 'lucide-react';
+import { Clock, Home } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-const statusConfig = {
-  pending: {
-    label: 'En attente',
-    icon: Loader2,
-    color: 'bg-warning text-warning-foreground',
-    description: 'Votre commande est en attente de confirmation par le restaurant.',
-    animate: true,
-  },
-  accepted: {
-    label: 'Acceptée',
-    icon: CheckCircle2,
-    color: 'bg-success text-success-foreground',
-    description: 'Le restaurant prépare votre commande !',
-    animate: false,
-  },
-  rejected: {
-    label: 'Refusée',
-    icon: XCircle,
-    color: 'bg-destructive text-destructive-foreground',
-    description: 'Désolé, le restaurant n\'a pas pu accepter votre commande.',
-    animate: false,
-  },
-  ready: {
-    label: 'Prête',
-    icon: Package,
-    color: 'bg-primary text-primary-foreground',
-    description: 'Votre commande est prête ! Venez la récupérer.',
-    animate: false,
-  },
+const statusMessages = {
+  pending: 'Votre commande est en attente de confirmation par le restaurant.',
+  accepted: 'Le restaurant prépare votre commande !',
+  rejected: 'Désolé, le restaurant n\'a pas pu accepter votre commande.',
+  ready: 'Votre commande est prête ! Venez la récupérer.',
 };
 
 const OrderConfirmation = () => {
@@ -56,7 +32,7 @@ const OrderConfirmation = () => {
         .maybeSingle();
       
       if (error) throw error;
-      setOrder(data as Order);
+      setOrder(data as unknown as Order);
       return data;
     },
   });
@@ -76,7 +52,7 @@ const OrderConfirmation = () => {
           filter: `id=eq.${id}`,
         },
         (payload) => {
-          setOrder(payload.new as Order);
+          setOrder(payload.new as unknown as Order);
         }
       )
       .subscribe();
@@ -109,36 +85,30 @@ const OrderConfirmation = () => {
     );
   }
 
-  const status = statusConfig[order.status];
-  const StatusIcon = status.icon;
   const items = order.items_list as CartItem[];
+  const message = statusMessages[order.status];
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
       
       <div className="container py-8">
-        <div className="max-w-lg mx-auto">
-          {/* Status Card */}
-          <div className="bg-card rounded-2xl p-8 shadow-elevated text-center mb-6 animate-scale-in">
-            <div className={`w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center ${status.color}`}>
-              <StatusIcon className={`w-10 h-10 ${status.animate ? 'animate-spin' : ''}`} />
-            </div>
-            
-            <Badge className={`${status.color} border-0 mb-4`}>
-              {status.label}
-            </Badge>
-            
+        <div className="max-w-lg mx-auto space-y-6">
+          {/* Progress Bar */}
+          <OrderProgressBar status={order.status} />
+          
+          {/* Status Message */}
+          <div className="bg-card rounded-2xl p-6 shadow-card text-center animate-scale-in">
             <h1 className="text-2xl font-bold text-foreground mb-2">
-              {order.status === 'ready' ? 'Commande prête !' : 'Merci pour votre commande !'}
+              {order.status === 'ready' ? '🎉 Commande prête !' : 'Merci pour votre commande !'}
             </h1>
             
             <p className="text-muted-foreground mb-6">
-              {status.description}
+              {message}
             </p>
 
             {/* Pickup Info */}
-            <div className="bg-secondary rounded-xl p-4 mb-6">
+            <div className="bg-secondary rounded-xl p-4">
               <div className="flex items-center justify-center gap-2 text-foreground">
                 <Clock className="w-5 h-5 text-primary" />
                 <span className="font-semibold">Récupération à {order.pickup_time}</span>
