@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 import { 
   ChefHat, 
   Clock, 
@@ -15,16 +16,17 @@ import {
   Package,
   Utensils,
   Store,
-  Menu
+  Menu,
+  LogOut
 } from 'lucide-react';
 
 const Merchants = () => {
+  const { signOut, user } = useAuth();
   const queryClient = useQueryClient();
   const [selectedRestaurant, setSelectedRestaurant] = useState<string>('');
   const [activeTab, setActiveTab] = useState<'orders' | 'menu'>('orders');
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [newOrderIds, setNewOrderIds] = useState<Set<string>>(new Set());
-
   // Fetch restaurants
   const { data: restaurants } = useQuery({
     queryKey: ['restaurants'],
@@ -192,12 +194,23 @@ const Merchants = () => {
               </div>
             </div>
             
-            {currentRestaurant && (
-              <div className="flex items-center gap-2">
-                <Store className="w-4 h-4" />
-                <span className="font-medium">{currentRestaurant.nom}</span>
-              </div>
-            )}
+            <div className="flex items-center gap-4">
+              {currentRestaurant && (
+                <div className="flex items-center gap-2">
+                  <Store className="w-4 h-4" />
+                  <span className="font-medium">{currentRestaurant.nom}</span>
+                </div>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => signOut()}
+                className="text-background hover:bg-background/10"
+              >
+                <LogOut className="w-4 h-4 mr-1" />
+                Déconnexion
+              </Button>
+            </div>
           </div>
         </div>
       </header>
