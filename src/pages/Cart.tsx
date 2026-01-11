@@ -41,18 +41,14 @@ const Cart = () => {
     mutationFn: async () => {
       if (!restaurantId) throw new Error('Restaurant non sélectionné');
       
+      // Use secure server-side function that validates prices
       const { data, error } = await supabase
-        .from('orders')
-        .insert({
-          client_name: clientName,
-          items_list: JSON.parse(JSON.stringify(items)),
-          total_price: totalPrice,
-          pickup_time: pickupTime,
-          restaurant_id: restaurantId,
-          status: 'pending',
-        })
-        .select()
-        .single();
+        .rpc('create_order_secure', {
+          p_client_name: clientName.trim(),
+          p_items: JSON.parse(JSON.stringify(items)),
+          p_pickup_time: pickupTime,
+          p_restaurant_id: restaurantId,
+        });
       
       if (error) throw error;
       return data;
