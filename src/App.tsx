@@ -31,7 +31,14 @@ const App = () => (
               <Route path="/restaurant/:id" element={<RestaurantMenu />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/order/:id" element={<OrderConfirmation />} />
-              <Route path="/dashboard" element={<Dashboard />} />
+              <Route 
+                path="/dashboard" 
+                element={
+                  <ProtectedRoute requireMerchant>
+                    <Dashboard />
+                  </ProtectedRoute>
+                } 
+              />
               <Route 
                 path="/merchants" 
                 element={
