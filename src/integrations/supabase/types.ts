@@ -68,6 +68,7 @@ export type Database = {
           restaurant_id: string
           status: string
           total_price: number
+          tracking_token: string | null
         }
         Insert: {
           client_name: string
@@ -78,6 +79,7 @@ export type Database = {
           restaurant_id: string
           status?: string
           total_price: number
+          tracking_token?: string | null
         }
         Update: {
           client_name?: string
@@ -88,6 +90,7 @@ export type Database = {
           restaurant_id?: string
           status?: string
           total_price?: number
+          tracking_token?: string | null
         }
         Relationships: [
           {
@@ -155,6 +158,31 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_order_secure: {
+        Args: {
+          p_client_name: string
+          p_items: Json
+          p_pickup_time: string
+          p_restaurant_id: string
+        }
+        Returns: {
+          client_name: string
+          created_at: string
+          id: string
+          items_list: Json
+          pickup_time: string
+          restaurant_id: string
+          status: string
+          total_price: number
+          tracking_token: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "orders"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
