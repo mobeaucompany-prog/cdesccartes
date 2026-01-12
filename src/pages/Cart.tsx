@@ -55,7 +55,8 @@ const Cart = () => {
     },
     onSuccess: (data) => {
       clearCart();
-      navigate(`/order/${data.id}`);
+      // Navigate with tracking token for customer access
+      navigate(`/order/${data.id}?token=${data.tracking_token}`);
       toast({
         title: "Commande envoyée !",
         description: "Vous recevrez une confirmation bientôt.",
