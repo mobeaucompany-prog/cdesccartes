@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Order, CartItem } from '@/types/database';
@@ -18,13 +18,21 @@ const statusMessages = {
 
 const OrderConfirmation = () => {
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
+  const trackingToken = searchParams.get('token');
   const navigate = useNavigate();
   const [order, setOrder] = useState<Order | null>(null);
 
-  // Initial fetch
+  // Initial fetch with tracking token header for customer access
   const { isLoading } = useQuery({
-    queryKey: ['order', id],
+    queryKey: ['order', id, trackingToken],
     queryFn: async () => {
+      // Pass tracking token via custom header for RLS policy
+      const headers: Record<string, string> = {};
+      if (trackingToken) {
+        headers['x-tracking-token'] = trackingToken;
+      }
+      
       const { data, error } = await supabase
         .from('orders')
         .select('*')
