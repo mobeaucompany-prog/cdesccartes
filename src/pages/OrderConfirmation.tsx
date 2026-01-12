@@ -31,16 +31,7 @@ const OrderConfirmation = () => {
         throw new Error('Missing order ID or tracking token');
       }
       
-      // Use edge function to securely fetch order with tracking token
-      const { data, error } = await supabase.functions.invoke('get-order-by-token', {
-        body: null,
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      // Manually build the URL with query params since invoke doesn't support GET params well
+      // Use fetch to call edge function with query params
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-order-by-token?id=${id}&token=${trackingToken}`,
         {
