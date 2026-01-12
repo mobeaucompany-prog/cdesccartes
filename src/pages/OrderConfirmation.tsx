@@ -23,31 +23,50 @@ const OrderConfirmation = () => {
   const navigate = useNavigate();
   const [order, setOrder] = useState<Order | null>(null);
 
-  // Initial fetch with tracking token header for customer access
+  // Fetch order via edge function for customer access with tracking token
   const { isLoading } = useQuery({
     queryKey: ['order', id, trackingToken],
     queryFn: async () => {
-      // Pass tracking token via custom header for RLS policy
-      const headers: Record<string, string> = {};
-      if (trackingToken) {
-        headers['x-tracking-token'] = trackingToken;
+      if (!id || !trackingToken) {
+        throw new Error('Missing order ID or tracking token');
       }
       
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('id', id)
-        .maybeSingle();
+      // Use edge function to securely fetch order with tracking token
+      const { data, error } = await supabase.functions.invoke('get-order-by-token', {
+        body: null,
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      // Manually build the URL with query params since invoke doesn't support GET params well
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-order-by-token?id=${id}&token=${trackingToken}`,
+        {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
       
-      if (error) throw error;
-      setOrder(data as unknown as Order);
-      return data;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch order');
+      }
+      
+      const result = await response.json();
+      setOrder(result.order as Order);
+      return result.order;
     },
+    enabled: !!id && !!trackingToken,
   });
 
-  // Subscribe to realtime updates
+  // Subscribe to realtime updates (will work for authenticated merchants viewing orders)
   useEffect(() => {
-    if (!id) return;
+    if (!id || !order) return;
 
     const channel = supabase
       .channel(`order-${id}`)
@@ -59,8 +78,24 @@ const OrderConfirmation = () => {
           table: 'orders',
           filter: `id=eq.${id}`,
         },
-        (payload) => {
-          setOrder(payload.new as unknown as Order);
+        async (payload) => {
+          // Re-fetch via edge function to ensure we get the updated data
+          if (trackingToken) {
+            const response = await fetch(
+              `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-order-by-token?id=${id}&token=${trackingToken}`,
+              {
+                method: 'GET',
+                headers: {
+                  'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+                  'Content-Type': 'application/json',
+                },
+              }
+            );
+            if (response.ok) {
+              const result = await response.json();
+              setOrder(result.order as Order);
+            }
+          }
         }
       )
       .subscribe();
@@ -68,7 +103,7 @@ const OrderConfirmation = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [id]);
+  }, [id, order, trackingToken]);
 
   if (isLoading) {
     return (
