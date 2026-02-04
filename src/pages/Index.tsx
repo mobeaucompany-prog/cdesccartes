@@ -1,3 +1,4 @@
+import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Restaurant } from "@/types/database";
@@ -8,6 +9,23 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { MapPin, Sparkles } from "lucide-react";
 
 const Index = () => {
+  const [userPosition, setUserPosition] = React.useState<[number, number] | null>(null);
+  
+  // Try to get user position on mount
+  React.useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserPosition([position.coords.latitude, position.coords.longitude]);
+        },
+        () => {
+          // Silent fail - distance will not be shown
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+      );
+    }
+  }, []);
+  
   const { data: restaurants, isLoading } = useQuery({
     queryKey: ["restaurants"],
     queryFn: async () => {
@@ -70,7 +88,7 @@ const Index = () => {
           ) : restaurants && restaurants.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {restaurants.map((restaurant, index) => (
-                <RestaurantCard key={restaurant.id} restaurant={restaurant} index={index} />
+                <RestaurantCard key={restaurant.id} restaurant={restaurant} index={index} userPosition={userPosition} />
               ))}
             </div>
           ) : (
