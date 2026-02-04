@@ -6,10 +6,36 @@ import { Badge } from '@/components/ui/badge';
 interface RestaurantCardProps {
   restaurant: Restaurant;
   index: number;
+  userPosition?: [number, number] | null;
 }
 
-const RestaurantCard = ({ restaurant, index }: RestaurantCardProps) => {
+// Calculate distance between two points in km
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+const RestaurantCard = ({ restaurant, index, userPosition }: RestaurantCardProps) => {
   const isOpen = restaurant.statut_ouvert_ferme;
+  
+  const distance = userPosition && restaurant.latitude && restaurant.longitude
+    ? calculateDistance(userPosition[0], userPosition[1], restaurant.latitude, restaurant.longitude)
+    : null;
+  
+  const distanceLabel = distance !== null
+    ? distance < 1 
+      ? `${Math.round(distance * 1000)} m` 
+      : `${distance.toFixed(1)} km`
+    : null;
 
   return (
     <Link 
@@ -61,10 +87,10 @@ const RestaurantCard = ({ restaurant, index }: RestaurantCardProps) => {
               <Clock className="w-4 h-4" />
               15-25 min
             </span>
-            {restaurant.adresse && (
-              <span className="flex items-center gap-1 truncate">
-                <MapPin className="w-4 h-4 flex-shrink-0" />
-                <span className="truncate">{restaurant.adresse}</span>
+            {distanceLabel && (
+              <span className="flex items-center gap-1">
+                <MapPin className="w-4 h-4" />
+                {distanceLabel}
               </span>
             )}
           </div>
