@@ -19,7 +19,7 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 }
 
 // Lazy load the map component to avoid React version conflicts
-const LazyMapContent = lazy(() => import('./MapContent'));
+const LazyMapContent = lazy(() => import('./MapContentLeaflet'));
 
 interface RestaurantMapProps {
   restaurants: Restaurant[];
