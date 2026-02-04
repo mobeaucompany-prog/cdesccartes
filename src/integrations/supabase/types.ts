@@ -133,36 +133,45 @@ export type Database = {
       }
       restaurants: {
         Row: {
+          adresse: string | null
           created_at: string
           description: string | null
+          horaires: Json | null
           id: string
           latitude: number | null
           longitude: number | null
           nom: string
           photo: string | null
           statut_ouvert_ferme: boolean
+          telephone: string | null
           updated_at: string
         }
         Insert: {
+          adresse?: string | null
           created_at?: string
           description?: string | null
+          horaires?: Json | null
           id?: string
           latitude?: number | null
           longitude?: number | null
           nom: string
           photo?: string | null
           statut_ouvert_ferme?: boolean
+          telephone?: string | null
           updated_at?: string
         }
         Update: {
+          adresse?: string | null
           created_at?: string
           description?: string | null
+          horaires?: Json | null
           id?: string
           latitude?: number | null
           longitude?: number | null
           nom?: string
           photo?: string | null
           statut_ouvert_ferme?: boolean
+          telephone?: string | null
           updated_at?: string
         }
         Relationships: []
