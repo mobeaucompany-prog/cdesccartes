@@ -61,10 +61,12 @@ const RestaurantCard = ({ restaurant, index }: RestaurantCardProps) => {
               <Clock className="w-4 h-4" />
               15-25 min
             </span>
-            <span className="flex items-center gap-1">
-              <MapPin className="w-4 h-4" />
-              0.5 km
-            </span>
+            {restaurant.adresse && (
+              <span className="flex items-center gap-1 truncate">
+                <MapPin className="w-4 h-4 flex-shrink-0" />
+                <span className="truncate">{restaurant.adresse}</span>
+              </span>
+            )}
           </div>
         </div>
 

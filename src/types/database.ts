@@ -6,6 +6,9 @@ export interface Restaurant {
   description: string | null;
   latitude: number | null;
   longitude: number | null;
+  adresse: string | null;
+  telephone: string | null;
+  horaires: Record<string, string> | null;
   created_at: string;
   updated_at: string;
 }
