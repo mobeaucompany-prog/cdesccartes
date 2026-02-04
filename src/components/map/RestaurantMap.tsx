@@ -18,8 +18,8 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
   return R * c;
 }
 
-// Lazy load the map component to avoid React version conflicts
-const LazyMapContent = lazy(() => import('./MapContentLeaflet'));
+// Lazy load the 3D map component
+const LazyMapContent = lazy(() => import('./MapContent3D'));
 
 interface RestaurantMapProps {
   restaurants: Restaurant[];
