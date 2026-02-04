@@ -8,7 +8,7 @@ import FloatingCart from '@/components/cart/FloatingCart';
 import { useCart } from '@/context/CartContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Clock, MapPin } from 'lucide-react';
+import { ArrowLeft, Clock, MapPin, Phone } from 'lucide-react';
 import { useEffect, useMemo } from 'react';
 
 const RestaurantMenu = () => {
@@ -134,16 +134,30 @@ const RestaurantMenu = () => {
               <p className="text-muted-foreground mb-4">{restaurant.description}</p>
             )}
 
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <Clock className="w-4 h-4 text-primary" />
-                15-25 min
-              </span>
-              <span className="flex items-center gap-1">
-                <MapPin className="w-4 h-4 text-primary" />
-                0.5 km
-              </span>
+            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+              {restaurant.horaires && Object.keys(restaurant.horaires).length > 0 && (
+                <span className="flex items-center gap-1">
+                  <Clock className="w-4 h-4 text-primary" />
+                  {(() => {
+                    const days = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+                    const today = days[new Date().getDay()];
+                    return restaurant.horaires[today] || 'Horaires non disponibles';
+                  })()}
+                </span>
+              )}
+              {restaurant.telephone && (
+                <a href={`tel:${restaurant.telephone}`} className="flex items-center gap-1 hover:text-primary transition-colors">
+                  <Phone className="w-4 h-4 text-primary" />
+                  {restaurant.telephone}
+                </a>
+              )}
             </div>
+            {restaurant.adresse && (
+              <div className="flex items-center gap-1 text-sm text-muted-foreground mt-2">
+                <MapPin className="w-4 h-4 text-primary flex-shrink-0" />
+                <span>{restaurant.adresse}</span>
+              </div>
+            )}
           </div>
         </div>
       </section>

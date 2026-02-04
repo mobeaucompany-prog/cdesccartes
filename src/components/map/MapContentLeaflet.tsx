@@ -145,7 +145,9 @@ const MapContentLeaflet = ({ restaurants, userPosition }: MapContentLeafletProps
             <div style="font-size:12px;font-weight:700;">${statusLabel}</div>
           </div>
           ${restaurant.description ? `<div style="margin-top:6px;font-size:12px;opacity:.75;">${restaurant.description}</div>` : ""}
-          ${distanceLabel ? `<div style="margin-top:8px;font-size:12px;font-weight:600;">📍 ${distanceLabel}</div>` : ""}
+          ${restaurant.adresse ? `<div style="margin-top:6px;font-size:12px;">📍 ${restaurant.adresse}</div>` : ""}
+          ${distanceLabel ? `<div style="margin-top:4px;font-size:12px;font-weight:600;">🚶 ${distanceLabel}</div>` : ""}
+          ${restaurant.telephone ? `<div style="margin-top:4px;font-size:12px;">📞 ${restaurant.telephone}</div>` : ""}
           <div style="margin-top:10px;">
             <a href="/restaurant/${restaurant.id}" style="font-size:12px;font-weight:700;text-decoration:underline;">Voir le menu →</a>
           </div>
