@@ -136,6 +136,8 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          latitude: number | null
+          longitude: number | null
           nom: string
           photo: string | null
           statut_ouvert_ferme: boolean
@@ -145,6 +147,8 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           nom: string
           photo?: string | null
           statut_ouvert_ferme?: boolean
@@ -154,6 +158,8 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           nom?: string
           photo?: string | null
           statut_ouvert_ferme?: boolean
