@@ -1,55 +1,30 @@
 
-# Plan : Intégration des informations complémentaires pour Good and Tasty
+# Création des sections de menu pour Good and Tasty
 
-## Ce qui sera fait
+## Objectif
+Créer la structure du menu avec les catégories demandées pour le restaurant "Good and Tasty".
 
-### 1. Modification de la base de données
-Ajout de nouvelles colonnes à la table `restaurants` :
-- `adresse` (texte) - pour stocker l'adresse complète
-- `telephone` (texte) - pour le numéro de téléphone
-- `horaires` (JSON) - pour stocker les horaires d'ouverture par jour
+## Catégories à créer
+1. **Pizza**
+2. **Bowl**
+3. **Burger**
+4. **Sandwich**
+5. **Tacos**
+6. **Tex Mex**
+7. **Salades**
+8. **Dessert**
+9. **Boissons**
 
-### 2. Mise à jour des données pour Good and Tasty
-- **Adresse** : 23/25 Av. André-Marie Ampère, 77420 Champs-sur-Marne
-- **Téléphone** : 01 64 68 68 68
-- **Horaires** :
-  - Lundi - Jeudi : 11:00 - 23:00
-  - Vendredi - Samedi : 11:00 - 23:30
-  - Dimanche : 11:00 - 23:00
-- **Coordonnées GPS** : latitude 48.8441, longitude 2.5859 (corrigées selon l'adresse)
+## Approche
+Je vais ajouter un article placeholder dans chaque catégorie pour créer la structure. Tu pourras ensuite me donner les vrais articles avec leurs prix pour chaque section.
 
-### 3. Mise à jour du code
-- Mise à jour du type `Restaurant` dans `src/types/database.ts`
-- Modification de `RestaurantCard.tsx` pour afficher l'adresse
-- Modification de `RestaurantMenu.tsx` pour afficher les horaires, téléphone et adresse
+## Actions techniques
+- Insertion de 9 articles dans la table `menu_items` avec le `restaurant_id` de Good and Tasty
+- Chaque article aura un nom temporaire (ex: "Pizza - À compléter") et un prix de 0€
+- Les articles seront marqués comme "hors stock" pour ne pas apparaître comme disponibles
 
----
-
-## Partie technique
-
-### Migration SQL
-```sql
-ALTER TABLE restaurants
-ADD COLUMN adresse text,
-ADD COLUMN telephone text,
-ADD COLUMN horaires jsonb DEFAULT '{}'::jsonb;
-```
-
-### Structure des horaires (format JSON)
-```json
-{
-  "lundi": "11:00-23:00",
-  "mardi": "11:00-23:00",
-  "mercredi": "11:00-23:00",
-  "jeudi": "11:00-23:00",
-  "vendredi": "11:00-23:30",
-  "samedi": "11:00-23:30",
-  "dimanche": "11:00-23:00"
-}
-```
-
-### Fichiers à modifier
-1. `src/types/database.ts` - Ajouter les nouveaux champs au type Restaurant
-2. `src/components/restaurant/RestaurantCard.tsx` - Afficher l'adresse au lieu de "0.5 km"
-3. `src/pages/RestaurantMenu.tsx` - Ajouter une section avec horaires, téléphone et adresse
-4. `src/components/map/MapContentLeaflet.tsx` - Afficher l'adresse dans le popup de la carte
+## Prochaine étape
+Une fois la structure créée, tu me donneras les détails pour chaque catégorie :
+- Nom des plats
+- Prix
+- Images (optionnel)
