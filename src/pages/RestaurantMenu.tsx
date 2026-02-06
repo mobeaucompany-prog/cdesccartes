@@ -54,6 +54,9 @@ const RestaurantMenu = () => {
     }
   }, [id, setRestaurantId]);
 
+  // Category display order (Dessert and Boissons last)
+  const categoryOrder = ['Pizza', 'Bowl', 'Burger', 'Sandwich', 'Tacos', 'Tex Mex', 'Salades', 'Dessert', 'Boissons'];
+
   // Group items by category
   const groupedItems = useMemo(() => {
     if (!menuItems) return {};
@@ -68,7 +71,15 @@ const RestaurantMenu = () => {
     }, {} as Record<string, MenuItem[]>);
   }, [menuItems]);
 
-  const categories = Object.keys(groupedItems);
+  // Sort categories: known order first, then alphabetically for any others
+  const categories = Object.keys(groupedItems).sort((a, b) => {
+    const indexA = categoryOrder.indexOf(a);
+    const indexB = categoryOrder.indexOf(b);
+    if (indexA === -1 && indexB === -1) return a.localeCompare(b);
+    if (indexA === -1) return 1;
+    if (indexB === -1) return -1;
+    return indexA - indexB;
+  });
 
   if (loadingRestaurant) {
     return (
