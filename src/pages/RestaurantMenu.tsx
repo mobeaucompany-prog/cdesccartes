@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Restaurant, MenuItem } from '@/types/database';
+import { Restaurant, MenuItem, parseMenuItemVariants } from '@/types/database';
 import Header from '@/components/layout/Header';
 import MenuItemCard from '@/components/menu/MenuItemCard';
 import FloatingCart from '@/components/cart/FloatingCart';
@@ -42,7 +42,7 @@ const RestaurantMenu = () => {
         .order('categorie');
       
       if (error) throw error;
-      return data as MenuItem[];
+      return parseMenuItemVariants(data);
     },
     enabled: !!id,
   });
