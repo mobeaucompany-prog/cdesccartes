@@ -1,10 +1,10 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { CartItem, MenuItem } from '@/types/database';
+import { CartItem, MenuItem, SizeVariant } from '@/types/database';
 
 interface CartContextType {
   items: CartItem[];
   restaurantId: string | null;
-  addItem: (item: MenuItem) => void;
+  addItem: (item: MenuItem, variant?: SizeVariant) => void;
   removeItem: (itemId: string) => void;
   updateQuantity: (itemId: string, quantity: number) => void;
   clearCart: () => void;
@@ -19,13 +19,18 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [items, setItems] = useState<CartItem[]>([]);
   const [restaurantId, setRestaurantId] = useState<string | null>(null);
 
-  const addItem = useCallback((menuItem: MenuItem) => {
+  const addItem = useCallback((menuItem: MenuItem, variant?: SizeVariant) => {
     setItems((currentItems) => {
-      const existingItem = currentItems.find((item) => item.id === menuItem.id);
+      // Generate unique ID for variant items
+      const itemId = variant ? `${menuItem.id}-${variant.name}` : menuItem.id;
+      const itemPrice = variant ? variant.price : menuItem.prix;
+      const itemName = variant ? `${menuItem.nom} (${variant.name})` : menuItem.nom;
+      
+      const existingItem = currentItems.find((item) => item.id === itemId);
       
       if (existingItem) {
         return currentItems.map((item) =>
-          item.id === menuItem.id
+          item.id === itemId
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
@@ -34,11 +39,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return [
         ...currentItems,
         {
-          id: menuItem.id,
-          nom: menuItem.nom,
-          prix: menuItem.prix,
+          id: itemId,
+          nom: itemName,
+          prix: itemPrice,
           quantity: 1,
           image: menuItem.image || undefined,
+          selectedSize: variant?.name,
         },
       ];
     });

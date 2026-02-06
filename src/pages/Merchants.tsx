@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { MenuItem, Order, Restaurant, CartItem } from '@/types/database';
+import { MenuItem, Order, Restaurant, CartItem, parseMenuItemVariants } from '@/types/database';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
@@ -54,7 +54,7 @@ const Merchants = () => {
         .eq('restaurant_id', selectedRestaurant)
         .order('categorie');
       if (error) throw error;
-      return data as MenuItem[];
+      return parseMenuItemVariants(data);
     },
     enabled: !!selectedRestaurant,
   });
