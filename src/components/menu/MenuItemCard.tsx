@@ -98,6 +98,11 @@ const MenuItemCard = ({ item, index }: MenuItemCardProps) => {
                     2 tailles
                   </span>
                 )}
+                {hasCustomization && (
+                  <span className="text-xs text-success bg-success/10 px-2 py-0.5 rounded-full">
+                    Personnalisable
+                  </span>
+                )}
               </div>
             </div>
             
