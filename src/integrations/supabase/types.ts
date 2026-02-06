@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           categorie: string
           created_at: string
+          customization_options: Json | null
           en_stock_bool: boolean
           id: string
           image: string | null
@@ -30,6 +31,7 @@ export type Database = {
         Insert: {
           categorie: string
           created_at?: string
+          customization_options?: Json | null
           en_stock_bool?: boolean
           id?: string
           image?: string | null
@@ -42,6 +44,7 @@ export type Database = {
         Update: {
           categorie?: string
           created_at?: string
+          customization_options?: Json | null
           en_stock_bool?: boolean
           id?: string
           image?: string | null

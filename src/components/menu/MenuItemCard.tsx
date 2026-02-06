@@ -1,9 +1,11 @@
 import { Plus, Check } from 'lucide-react';
 import { MenuItem, SizeVariant } from '@/types/database';
+import { SelectedOption } from '@/types/customization';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/context/CartContext';
 import { useState } from 'react';
 import SizeSelector from './SizeSelector';
+import BowlCustomizer from './BowlCustomizer';
 
 interface MenuItemCardProps {
   item: MenuItem;
@@ -14,6 +16,7 @@ const MenuItemCard = ({ item, index }: MenuItemCardProps) => {
   const { addItem, items } = useCart();
   const [isAdding, setIsAdding] = useState(false);
   const [showSizeSelector, setShowSizeSelector] = useState(false);
+  const [showBowlCustomizer, setShowBowlCustomizer] = useState(false);
   
   const cartItem = items.find(i => i.id === item.id || i.id.startsWith(`${item.id}-`));
   const isInCart = !!cartItem;
@@ -22,11 +25,14 @@ const MenuItemCard = ({ item, index }: MenuItemCardProps) => {
     .reduce((sum, i) => sum + i.quantity, 0);
 
   const hasVariants = item.variants && item.variants.length > 0;
+  const hasCustomization = item.customization_options && item.customization_options.option_groups.length > 0;
 
   const handleAddToCart = () => {
     if (!item.en_stock_bool) return;
     
-    if (hasVariants) {
+    if (hasCustomization) {
+      setShowBowlCustomizer(true);
+    } else if (hasVariants) {
       setShowSizeSelector(true);
     } else {
       setIsAdding(true);
@@ -38,6 +44,12 @@ const MenuItemCard = ({ item, index }: MenuItemCardProps) => {
   const handleSizeSelect = (variant: SizeVariant) => {
     setIsAdding(true);
     addItem(item, variant);
+    setTimeout(() => setIsAdding(false), 500);
+  };
+
+  const handleCustomizationConfirm = (selections: SelectedOption[], totalSupplement: number) => {
+    setIsAdding(true);
+    addItem(item, undefined, selections, totalSupplement);
     setTimeout(() => setIsAdding(false), 500);
   };
 
@@ -133,6 +145,16 @@ const MenuItemCard = ({ item, index }: MenuItemCardProps) => {
           onSelect={handleSizeSelect}
           variants={item.variants!}
           itemName={item.nom}
+        />
+      )}
+
+      {hasCustomization && (
+        <BowlCustomizer
+          isOpen={showBowlCustomizer}
+          onClose={() => setShowBowlCustomizer(false)}
+          onConfirm={handleCustomizationConfirm}
+          item={item}
+          config={item.customization_options!}
         />
       )}
     </>

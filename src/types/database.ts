@@ -1,3 +1,5 @@
+import { CustomizationConfig, SelectedOption } from './customization';
+
 export interface Restaurant {
   id: string;
   nom: string;
@@ -27,16 +29,18 @@ export interface MenuItem {
   en_stock_bool: boolean;
   image: string | null;
   variants: SizeVariant[] | null;
+  customization_options: CustomizationConfig | null;
   created_at: string;
   updated_at: string;
 }
 
-// Helper to parse variants from JSON
+// Helper to parse variants and customization from JSON
 export function parseMenuItemVariants(data: unknown): MenuItem[] {
   if (!Array.isArray(data)) return [];
   return data.map((item: Record<string, unknown>) => ({
     ...item,
     variants: item.variants ? (item.variants as SizeVariant[]) : null,
+    customization_options: item.customization_options ? (item.customization_options as CustomizationConfig) : null,
   })) as MenuItem[];
 }
 
@@ -58,4 +62,5 @@ export interface CartItem {
   quantity: number;
   image?: string;
   selectedSize?: string;
+  customizations?: SelectedOption[];
 }
