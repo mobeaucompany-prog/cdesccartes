@@ -25,6 +25,7 @@ export type Database = {
           prix: number
           restaurant_id: string
           updated_at: string
+          variants: Json | null
         }
         Insert: {
           categorie: string
@@ -36,6 +37,7 @@ export type Database = {
           prix: number
           restaurant_id: string
           updated_at?: string
+          variants?: Json | null
         }
         Update: {
           categorie?: string
@@ -47,6 +49,7 @@ export type Database = {
           prix?: number
           restaurant_id?: string
           updated_at?: string
+          variants?: Json | null
         }
         Relationships: [
           {
