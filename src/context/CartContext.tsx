@@ -1,10 +1,11 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { CartItem, MenuItem, SizeVariant } from '@/types/database';
+import { SelectedOption } from '@/types/customization';
 
 interface CartContextType {
   items: CartItem[];
   restaurantId: string | null;
-  addItem: (item: MenuItem, variant?: SizeVariant) => void;
+  addItem: (item: MenuItem, variant?: SizeVariant, customizations?: SelectedOption[], customizationSupplement?: number) => void;
   removeItem: (itemId: string) => void;
   updateQuantity: (itemId: string, quantity: number) => void;
   clearCart: () => void;
@@ -19,12 +20,40 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [items, setItems] = useState<CartItem[]>([]);
   const [restaurantId, setRestaurantId] = useState<string | null>(null);
 
-  const addItem = useCallback((menuItem: MenuItem, variant?: SizeVariant) => {
+  const addItem = useCallback((menuItem: MenuItem, variant?: SizeVariant, customizations?: SelectedOption[], customizationSupplement?: number) => {
     setItems((currentItems) => {
-      // Generate unique ID for variant items
-      const itemId = variant ? `${menuItem.id}-${variant.name}` : menuItem.id;
-      const itemPrice = variant ? variant.price : menuItem.prix;
-      const itemName = variant ? `${menuItem.nom} (${variant.name})` : menuItem.nom;
+      // Generate unique ID based on variant or customizations
+      let itemId = menuItem.id;
+      let itemPrice = menuItem.prix;
+      let itemName = menuItem.nom;
+      
+      if (variant) {
+        itemId = `${menuItem.id}-${variant.name}`;
+        itemPrice = variant.price;
+        itemName = `${menuItem.nom} (${variant.name})`;
+      } else if (customizations && customizations.length > 0) {
+        // Create unique ID based on customization selections
+        const customKey = customizations.map(c => c.option_name).sort().join('-');
+        itemId = `${menuItem.id}-custom-${Date.now()}`;
+        itemPrice = menuItem.prix + (customizationSupplement || 0);
+        const optionNames = customizations.map(c => c.option_name).slice(0, 3).join(', ');
+        itemName = `${menuItem.nom} (${optionNames}${customizations.length > 3 ? '...' : ''})`;
+      }
+      
+      // For customized items, always add as new (don't merge)
+      if (customizations && customizations.length > 0) {
+        return [
+          ...currentItems,
+          {
+            id: itemId,
+            nom: itemName,
+            prix: itemPrice,
+            quantity: 1,
+            image: menuItem.image || undefined,
+            customizations,
+          },
+        ];
+      }
       
       const existingItem = currentItems.find((item) => item.id === itemId);
       
