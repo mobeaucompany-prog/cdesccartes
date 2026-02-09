@@ -25,7 +25,9 @@ const MenuItemCard = ({ item, index }: MenuItemCardProps) => {
     .reduce((sum, i) => sum + i.quantity, 0);
 
   const hasVariants = item.variants && item.variants.length > 0;
-  const hasCustomization = item.customization_options && item.customization_options.option_groups.length > 0;
+  const hasCustomization = item.customization_options && 
+    ((item.customization_options.option_groups && item.customization_options.option_groups.length > 0) ||
+     ((item.customization_options as any).groups && (item.customization_options as any).groups.length > 0));
 
   const handleAddToCart = () => {
     if (!item.en_stock_bool) return;
