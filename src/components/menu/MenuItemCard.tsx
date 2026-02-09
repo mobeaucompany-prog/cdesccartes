@@ -72,7 +72,7 @@ const MenuItemCard = ({ item, index }: MenuItemCardProps) => {
             <img
               src={item.image || 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400'}
               alt={item.nom}
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+              className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110"
             />
             {!item.en_stock_bool && (
               <div className="absolute inset-0 bg-background/70 flex items-center justify-center">
