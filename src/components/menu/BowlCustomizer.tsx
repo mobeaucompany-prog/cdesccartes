@@ -136,11 +136,17 @@ const BowlCustomizer = ({ isOpen, onClose, onConfirm, item, config }: BowlCustom
                           </div>
                         )}
                         
-                        <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center text-2xl mb-1">
-                          {group.id === 'viande' && '🍖'}
-                          {group.id === 'viande_sup' && '🥩'}
-                          {group.id === 'sauces' && '🥣'}
-                          {group.id === 'boisson' && '🥤'}
+                        <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center text-2xl mb-1 overflow-hidden">
+                          {option.image ? (
+                            <img src={option.image} alt={option.name} className="w-full h-full object-contain" />
+                          ) : (
+                            <>
+                              {group.id === 'viande' && '🍖'}
+                              {group.id === 'viande_sup' && '🥩'}
+                              {group.id === 'sauces' && '🥣'}
+                              {group.id === 'boisson' && '🥤'}
+                            </>
+                          )}
                         </div>
                         
                         <span className="text-xs text-center font-medium line-clamp-2">
