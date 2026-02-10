@@ -190,11 +190,17 @@ const RestaurantMenu = () => {
                   <span className="w-1 h-6 gradient-primary rounded-full" />
                   {category}
                 </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {groupedItems[category].map((item, index) => (
-                    <MenuItemCard key={item.id} item={item} index={index} />
-                  ))}
-                </div>
+                <Carousel opts={{ align: 'start', dragFree: true }} className="w-full">
+                  <CarouselContent className="-ml-3">
+                    {groupedItems[category].map((item, index) => (
+                      <CarouselItem key={item.id} className="pl-3 basis-[75%] sm:basis-[45%] md:basis-[35%] lg:basis-[28%]">
+                        <MenuItemCard item={item} index={index} />
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  <CarouselPrevious className="hidden sm:flex -left-4" />
+                  <CarouselNext className="hidden sm:flex -right-4" />
+                </Carousel>
               </div>
             ))}
           </div>
