@@ -13,6 +13,7 @@ interface SizeSelectorProps {
   onSelect: (variant: SizeVariant) => void;
   variants: SizeVariant[];
   itemName: string;
+  title?: string;
 }
 
 const SizeSelector = ({ isOpen, onClose, onSelect, variants, itemName }: SizeSelectorProps) => {

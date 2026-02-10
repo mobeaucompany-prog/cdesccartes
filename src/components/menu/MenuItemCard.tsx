@@ -95,7 +95,7 @@ const MenuItemCard = ({ item, index }: MenuItemCardProps) => {
                 </span>
                 {hasVariants && (
                   <span className="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                    2 tailles
+                    {item.variants!.some(v => v.name === 'Menu' || v.name === 'Seul') ? '2 choix' : '2 tailles'}
                   </span>
                 )}
                 {hasCustomization && (
