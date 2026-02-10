@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Restaurant, MenuItem, parseMenuItemVariants } from '@/types/database';
 import Header from '@/components/layout/Header';
 import MenuItemCard from '@/components/menu/MenuItemCard';
+import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '@/components/ui/carousel';
 import FloatingCart from '@/components/cart/FloatingCart';
 import { useCart } from '@/context/CartContext';
 import { Skeleton } from '@/components/ui/skeleton';
