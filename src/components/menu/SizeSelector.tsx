@@ -13,14 +13,17 @@ interface SizeSelectorProps {
   onSelect: (variant: SizeVariant) => void;
   variants: SizeVariant[];
   itemName: string;
+  title?: string;
 }
 
-const SizeSelector = ({ isOpen, onClose, onSelect, variants, itemName }: SizeSelectorProps) => {
+const SizeSelector = ({ isOpen, onClose, onSelect, variants, itemName, title }: SizeSelectorProps) => {
+  const displayTitle = title || (variants.some(v => v.name === 'Menu' || v.name === 'Seul') ? 'Choisissez votre formule' : 'Choisissez la taille');
+  
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-center">Choisissez la taille</DialogTitle>
+          <DialogTitle className="text-center">{displayTitle}</DialogTitle>
           <p className="text-center text-muted-foreground text-sm">{itemName}</p>
         </DialogHeader>
         <div className="flex flex-col gap-3 mt-4">
