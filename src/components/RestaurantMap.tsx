@@ -10,8 +10,8 @@ export default function RestaurantMap() {
   const [scale, setScale] = useState(1);
   const [translate, setTranslate] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
-  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
-  const [translateStart, setTranslateStart] = useState({ x: 0, y: 0 });
+  const panStart = useRef({ x: 0, y: 0 });
+  const translateStart = useRef({ x: 0, y: 0 });
 
   const MIN_SCALE = 1;
   const MAX_SCALE = 4;
@@ -33,6 +33,25 @@ export default function RestaurantMap() {
     setTranslate({ x: 0, y: 0 });
   }, []);
 
+  // Prevent page scroll when touching the map container
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const preventScroll = (e: TouchEvent) => {
+      e.preventDefault();
+    };
+
+    // passive: false is required to allow preventDefault on touch events
+    container.addEventListener("touchmove", preventScroll, { passive: false });
+    container.addEventListener("touchstart", preventScroll, { passive: false });
+
+    return () => {
+      container.removeEventListener("touchmove", preventScroll);
+      container.removeEventListener("touchstart", preventScroll);
+    };
+  }, []);
+
   const handleWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault();
     const delta = e.deltaY > 0 ? -0.3 : 0.3;
@@ -44,24 +63,45 @@ export default function RestaurantMap() {
   }, []);
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
-    if (scale <= 1) return;
     setIsPanning(true);
-    setPanStart({ x: e.clientX, y: e.clientY });
-    setTranslateStart(translate);
+    panStart.current = { x: e.clientX, y: e.clientY };
+    translateStart.current = { ...translate };
     containerRef.current?.setPointerCapture(e.pointerId);
-  }, [scale, translate]);
+  }, [translate]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    if (!isPanning) return;
+    if (!isPanning || scale <= 1) return;
     setTranslate({
-      x: translateStart.x + (e.clientX - panStart.x),
-      y: translateStart.y + (e.clientY - panStart.y),
+      x: translateStart.current.x + (e.clientX - panStart.current.x),
+      y: translateStart.current.y + (e.clientY - panStart.current.y),
     });
-  }, [isPanning, panStart, translateStart]);
+  }, [isPanning, scale]);
 
-  const handlePointerUp = useCallback(() => {
+  const handlePointerUp = useCallback((e: React.PointerEvent) => {
+    if (!isPanning) return;
+    const dx = Math.abs(e.clientX - panStart.current.x);
+    const dy = Math.abs(e.clientY - panStart.current.y);
+    
+    // If it was a tap (not a drag), forward click to SVG elements
+    if (dx < 5 && dy < 5) {
+      const svgDoc = objectRef.current?.contentDocument;
+      if (svgDoc) {
+        const objRect = objectRef.current!.getBoundingClientRect();
+        // Convert screen coords to SVG coords accounting for transform
+        const svgX = (e.clientX - objRect.left) / scale - translate.x / scale;
+        const svgY = (e.clientY - objRect.top) / scale - translate.y / scale;
+        
+        const el = svgDoc.elementFromPoint(
+          svgX + objRect.left,
+          svgY + objRect.top
+        );
+        if (el) {
+          el.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+        }
+      }
+    }
     setIsPanning(false);
-  }, []);
+  }, [isPanning, scale, translate]);
 
   useEffect(() => {
     const object = objectRef.current;
@@ -89,9 +129,15 @@ export default function RestaurantMap() {
       if (bg) {
         bg.style.filter = "brightness(75%)";
       }
+
+      // Block touch events inside SVG from scrolling page
+      svgDoc.addEventListener("touchmove", (e) => e.preventDefault(), { passive: false } as any);
+      svgDoc.addEventListener("touchstart", (e) => e.preventDefault(), { passive: false } as any);
     };
 
     object.addEventListener("load", onLoad);
+    // Re-run in case already loaded
+    if (object.contentDocument?.readyState === "complete") onLoad();
   }, [navigate]);
 
   return (
@@ -111,13 +157,13 @@ export default function RestaurantMap() {
         </div>
         <div
           ref={containerRef}
-          className="overflow-hidden touch-none select-none"
-          style={{ cursor: scale > 1 ? (isPanning ? 'grabbing' : 'grab') : 'default' }}
+          className="overflow-hidden select-none"
+          style={{ cursor: scale > 1 ? (isPanning ? 'grabbing' : 'grab') : 'default', touchAction: 'none' }}
           onWheel={handleWheel}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
-          onPointerCancel={handlePointerUp}
+          onPointerCancel={() => setIsPanning(false)}
         >
           <object
             ref={objectRef}
