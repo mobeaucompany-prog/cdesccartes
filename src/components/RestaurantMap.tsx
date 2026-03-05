@@ -20,7 +20,7 @@ const RESTAURANT_ZONES = [
     label: "Good and Tasty",
     xMin: 27,
     xMax: 38,
-    yMin: 60,
+    yMin: 55,
     yMax: 75,
   },
   {
