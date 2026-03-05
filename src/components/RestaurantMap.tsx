@@ -29,8 +29,8 @@ const RESTAURANT_ZONES = [
     label: "Au Petit Creux",
     xMin: 78,
     xMax: 98,
-    yMin: 22,
-    yMax: 48,
+    yMin: 62,
+    yMax: 88,
   },
 ];
 
