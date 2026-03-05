@@ -10,7 +10,7 @@ const RESTAURANT_ZONES = [
     path: "/restaurant/45af1a7b-368e-4fb2-85fa-db23a11c23d6",
     label: "G La Dalle",
     xMin: 1,
-    xMax: 9,
+    xMax: 12,
     yMin: 53,
     yMax: 67,
   },
