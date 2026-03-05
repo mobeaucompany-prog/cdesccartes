@@ -11,7 +11,7 @@ const RESTAURANT_ZONES = [
     label: "G La Dalle",
     xMin: 1,
     xMax: 10,
-    yMin: 53,
+    yMin: 55,
     yMax: 67,
   },
   {
