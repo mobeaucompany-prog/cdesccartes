@@ -27,7 +27,7 @@ const RESTAURANT_ZONES = [
     id: "AuPtiCreux",
     path: "/restaurant/977c4d48-3161-4845-94a3-6a7ef05c9f0e",
     label: "Au Petit Creux",
-    xMin: 70,
+    xMin: 75,
     xMax: 90,
     yMin: 62,
     yMax: 88,
