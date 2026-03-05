@@ -85,18 +85,34 @@ export default function RestaurantMap() {
     // If it was a tap (not a drag), forward click to SVG elements
     if (dx < 5 && dy < 5) {
       const svgDoc = objectRef.current?.contentDocument;
-      if (svgDoc) {
-        const objRect = objectRef.current!.getBoundingClientRect();
-        // Convert screen coords to SVG coords accounting for transform
-        const svgX = (e.clientX - objRect.left) / scale - translate.x / scale;
-        const svgY = (e.clientY - objRect.top) / scale - translate.y / scale;
+      const objEl = objectRef.current;
+      if (svgDoc && objEl) {
+        const containerRect = containerRef.current!.getBoundingClientRect();
         
-        const el = svgDoc.elementFromPoint(
-          svgX + objRect.left,
-          svgY + objRect.top
-        );
+        // Position relative to the container (which is not transformed)
+        const relX = e.clientX - containerRect.left;
+        const relY = e.clientY - containerRect.top;
+        
+        // Undo the CSS transform: scale(s) translate(tx/s, ty/s)
+        // transformOrigin is center, so we need to account for that
+        const cx = containerRect.width / 2;
+        const cy = containerRect.height / 2;
+        
+        // Reverse: point_in_svg = (point_in_container - center) / scale - translate/scale + center
+        const svgX = (relX - cx) / scale - translate.x / scale + cx;
+        const svgY = (relY - cy) / scale - translate.y / scale + cy;
+        
+        const el = svgDoc.elementFromPoint(svgX, svgY);
         if (el) {
-          el.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+          // Walk up to find a clickable restaurant element
+          let current: Element | null = el;
+          while (current) {
+            if (current.id && (current as HTMLElement).style?.cursor === "pointer") {
+              current.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+              break;
+            }
+            current = current.parentElement;
+          }
         }
       }
     }
