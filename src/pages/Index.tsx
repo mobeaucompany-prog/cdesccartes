@@ -67,6 +67,13 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Map Section */}
+      <section className="py-8 px-4">
+        <div className="container">
+          <RestaurantMap />
+        </div>
+      </section>
+
       {/* Restaurants Grid */}
       <section className="py-8 px-4">
         <div className="container">
@@ -96,13 +103,6 @@ const Index = () => {
               <p className="text-muted-foreground">Aucun restaurant disponible pour le moment.</p>
             </div>
           )}
-        </div>
-      </section>
-
-      {/* Map Section */}
-      <section className="py-8 px-4 bg-muted/30">
-        <div className="container">
-          <RestaurantMap />
         </div>
       </section>
     </div>
