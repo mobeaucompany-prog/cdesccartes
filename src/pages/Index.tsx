@@ -3,11 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Restaurant } from "@/types/database";
 import RestaurantCard from "@/components/restaurant/RestaurantCard";
-import RestaurantMap from "@/components/map/RestaurantMap";
+import RestaurantMap from "@/components/RestaurantMap";
 import Header from "@/components/layout/Header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MapPin, Sparkles } from "lucide-react";
-import RestaurantMap from "@/components/RestaurantMap";
 
 const Index = () => {
   const [userPosition, setUserPosition] = React.useState<[number, number] | null>(null);
@@ -103,11 +102,7 @@ const Index = () => {
       {/* Map Section */}
       <section className="py-8 px-4 bg-muted/30">
         <div className="container">
-          {isLoading ? (
-            <Skeleton className="h-[450px] w-full rounded-2xl" />
-          ) : restaurants && restaurants.length > 0 ? (
-            <RestaurantMap restaurants={restaurants} />
-          ) : null}
+          <RestaurantMap />
         </div>
       </section>
     </div>
