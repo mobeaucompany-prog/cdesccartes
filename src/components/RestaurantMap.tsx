@@ -29,7 +29,7 @@ export default function RestaurantMap() {
 
       const bg = svgDoc.getElementById("carteCartoon");
       if (bg) {
-        bg.style.filter = "brightness(45%)";
+        bg.style.filter = "brightness(75%)";
       }
     };
 
