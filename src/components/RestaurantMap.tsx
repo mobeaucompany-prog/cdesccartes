@@ -30,7 +30,7 @@ const RESTAURANT_ZONES = [
     xMin: 75,
     xMax: 90,
     yMin: 70,
-    yMax: 80,
+    yMax: 83,
   },
 ];
 
