@@ -9,19 +9,28 @@ const RESTAURANT_ZONES = [
     id: "GLaDalle",
     path: "/restaurant/45af1a7b-368e-4fb2-85fa-db23a11c23d6",
     label: "G La Dalle",
-    xMin: 1, xMax: 12, yMin: 48, yMax: 72,
+    xMin: 1,
+    xMax: 12,
+    yMin: 48,
+    yMax: 72,
   },
   {
     id: "GoodAndTasty",
     path: "/restaurant/7ff1f514-1bb0-4a67-a5e3-661ece50dbd3",
     label: "Good and Tasty",
-    xMin: 17, xMax: 30, yMin: 45, yMax: 65,
+    xMin: 17,
+    xMax: 30,
+    yMin: 45,
+    yMax: 65,
   },
   {
     id: "AuPtiCreux",
     path: "/restaurant/977c4d48-3161-4845-94a3-6a7ef05c9f0e",
     label: "Au Petit Creux",
-    xMin: 48, xMax: 68, yMin: 52, yMax: 78,
+    xMin: 58,
+    xMax: 78,
+    yMin: 42,
+    yMax: 68,
   },
 ];
 
@@ -59,7 +68,9 @@ export default function RestaurantMap() {
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
-    const preventScroll = (e: TouchEvent) => { e.preventDefault(); };
+    const preventScroll = (e: TouchEvent) => {
+      e.preventDefault();
+    };
     container.addEventListener("touchmove", preventScroll, { passive: false });
     container.addEventListener("touchstart", preventScroll, { passive: false });
     return () => {
@@ -78,10 +89,14 @@ export default function RestaurantMap() {
         if (!svgDoc) return;
         const bg = svgDoc.getElementById("carteCartoon");
         if (bg) bg.style.filter = "brightness(75%)";
-      } catch { /* cross-origin — ignore */ }
+      } catch {
+        /* cross-origin — ignore */
+      }
     };
     object.addEventListener("load", onLoad);
-    try { if (object.contentDocument?.readyState === "complete") onLoad(); } catch {}
+    try {
+      if (object.contentDocument?.readyState === "complete") onLoad();
+    } catch {}
     return () => object.removeEventListener("load", onLoad);
   }, []);
 
@@ -95,69 +110,96 @@ export default function RestaurantMap() {
     });
   }, []);
 
-  const handlePointerDown = useCallback((e: React.PointerEvent) => {
-    setIsPanning(true);
-    panStart.current = { x: e.clientX, y: e.clientY };
-    translateStart.current = { ...translate };
-    containerRef.current?.setPointerCapture(e.pointerId);
-  }, [translate]);
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      setIsPanning(true);
+      panStart.current = { x: e.clientX, y: e.clientY };
+      translateStart.current = { ...translate };
+      containerRef.current?.setPointerCapture(e.pointerId);
+    },
+    [translate],
+  );
 
-  const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    if (!isPanning || scale <= 1) return;
-    setTranslate({
-      x: translateStart.current.x + (e.clientX - panStart.current.x),
-      y: translateStart.current.y + (e.clientY - panStart.current.y),
-    });
-  }, [isPanning, scale]);
+  const handlePointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      if (!isPanning || scale <= 1) return;
+      setTranslate({
+        x: translateStart.current.x + (e.clientX - panStart.current.x),
+        y: translateStart.current.y + (e.clientY - panStart.current.y),
+      });
+    },
+    [isPanning, scale],
+  );
 
-  const handlePointerUp = useCallback((e: React.PointerEvent) => {
-    if (!isPanning) return;
-    const dx = Math.abs(e.clientX - panStart.current.x);
-    const dy = Math.abs(e.clientY - panStart.current.y);
+  const handlePointerUp = useCallback(
+    (e: React.PointerEvent) => {
+      if (!isPanning) return;
+      const dx = Math.abs(e.clientX - panStart.current.x);
+      const dy = Math.abs(e.clientY - panStart.current.y);
 
-    // Tap detection (not a drag)
-    if (dx < 8 && dy < 8) {
-      const container = containerRef.current;
-      if (!container) { setIsPanning(false); return; }
-
-      const rect = container.getBoundingClientRect();
-      const cx = rect.width / 2;
-      const cy = rect.height / 2;
-
-      // Reverse the CSS transform to get position in original SVG space
-      const relX = e.clientX - rect.left;
-      const relY = e.clientY - rect.top;
-      const svgX = (relX - cx) / scale - translate.x / scale + cx;
-      const svgY = (relY - cy) / scale - translate.y / scale + cy;
-
-      // Convert to percentage of container
-      const pctX = (svgX / rect.width) * 100;
-      const pctY = (svgY / rect.height) * 100;
-
-      // Check if tap is inside any restaurant zone
-      for (const zone of RESTAURANT_ZONES) {
-        if (pctX >= zone.xMin && pctX <= zone.xMax && pctY >= zone.yMin && pctY <= zone.yMax) {
-          navigate(zone.path);
+      // Tap detection (not a drag)
+      if (dx < 8 && dy < 8) {
+        const container = containerRef.current;
+        if (!container) {
           setIsPanning(false);
           return;
         }
+
+        const rect = container.getBoundingClientRect();
+        const cx = rect.width / 2;
+        const cy = rect.height / 2;
+
+        // Reverse the CSS transform to get position in original SVG space
+        const relX = e.clientX - rect.left;
+        const relY = e.clientY - rect.top;
+        const svgX = (relX - cx) / scale - translate.x / scale + cx;
+        const svgY = (relY - cy) / scale - translate.y / scale + cy;
+
+        // Convert to percentage of container
+        const pctX = (svgX / rect.width) * 100;
+        const pctY = (svgY / rect.height) * 100;
+
+        // Check if tap is inside any restaurant zone
+        for (const zone of RESTAURANT_ZONES) {
+          if (pctX >= zone.xMin && pctX <= zone.xMax && pctY >= zone.yMin && pctY <= zone.yMax) {
+            navigate(zone.path);
+            setIsPanning(false);
+            return;
+          }
+        }
       }
-    }
-    setIsPanning(false);
-  }, [isPanning, scale, translate, navigate]);
+      setIsPanning(false);
+    },
+    [isPanning, scale, translate, navigate],
+  );
 
   return (
     <div className="w-full max-w-6xl mx-auto">
       <div className="relative rounded-xl shadow-lg overflow-hidden">
         {/* Zoom controls */}
         <div className="absolute top-3 right-3 z-20 flex flex-col gap-1.5">
-          <Button variant="secondary" size="icon" onClick={handleZoomIn} className="h-9 w-9 shadow-md bg-background/80 backdrop-blur-sm hover:bg-background">
+          <Button
+            variant="secondary"
+            size="icon"
+            onClick={handleZoomIn}
+            className="h-9 w-9 shadow-md bg-background/80 backdrop-blur-sm hover:bg-background"
+          >
             <ZoomIn className="h-4 w-4" />
           </Button>
-          <Button variant="secondary" size="icon" onClick={handleZoomOut} className="h-9 w-9 shadow-md bg-background/80 backdrop-blur-sm hover:bg-background">
+          <Button
+            variant="secondary"
+            size="icon"
+            onClick={handleZoomOut}
+            className="h-9 w-9 shadow-md bg-background/80 backdrop-blur-sm hover:bg-background"
+          >
             <ZoomOut className="h-4 w-4" />
           </Button>
-          <Button variant="secondary" size="icon" onClick={handleReset} className="h-9 w-9 shadow-md bg-background/80 backdrop-blur-sm hover:bg-background">
+          <Button
+            variant="secondary"
+            size="icon"
+            onClick={handleReset}
+            className="h-9 w-9 shadow-md bg-background/80 backdrop-blur-sm hover:bg-background"
+          >
             <RotateCcw className="h-4 w-4" />
           </Button>
         </div>
@@ -165,7 +207,7 @@ export default function RestaurantMap() {
         <div
           ref={containerRef}
           className="overflow-hidden select-none"
-          style={{ cursor: scale > 1 ? (isPanning ? 'grabbing' : 'grab') : 'pointer', touchAction: 'none' }}
+          style={{ cursor: scale > 1 ? (isPanning ? "grabbing" : "grab") : "pointer", touchAction: "none" }}
           onWheel={handleWheel}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
@@ -180,7 +222,7 @@ export default function RestaurantMap() {
             style={{
               transform: `scale(${scale}) translate(${translate.x / scale}px, ${translate.y / scale}px)`,
               transformOrigin: "center center",
-              willChange: 'transform',
+              willChange: "transform",
             }}
           />
         </div>
