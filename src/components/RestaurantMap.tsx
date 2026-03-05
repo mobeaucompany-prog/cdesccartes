@@ -19,7 +19,7 @@ const RESTAURANT_ZONES = [
     path: "/restaurant/7ff1f514-1bb0-4a67-a5e3-661ece50dbd3",
     label: "Good and Tasty",
     xMin: 30,
-    xMax: 40,
+    xMax: 38,
     yMin: 60,
     yMax: 75,
   },
