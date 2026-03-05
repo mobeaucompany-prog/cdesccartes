@@ -21,7 +21,7 @@ const RESTAURANT_ZONES = [
     xMin: 27,
     xMax: 38,
     yMin: 55,
-    yMax: 75,
+    yMax: 70,
   },
   {
     id: "AuPtiCreux",
