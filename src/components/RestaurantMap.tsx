@@ -41,7 +41,7 @@ export default function RestaurantMap() {
       <object
         ref={objectRef}
         type="image/svg+xml"
-        data="/src/assets/map_citeDescartes.svg"
+        data="/images/map_citeDescartes.svg"
         className="w-full rounded-xl shadow-lg"
       />
     </div>
