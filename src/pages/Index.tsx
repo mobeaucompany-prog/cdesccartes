@@ -7,10 +7,11 @@ import RestaurantMap from "@/components/map/RestaurantMap";
 import Header from "@/components/layout/Header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MapPin, Sparkles } from "lucide-react";
+import RestaurantMap from "@/components/RestaurantMap";
 
 const Index = () => {
   const [userPosition, setUserPosition] = React.useState<[number, number] | null>(null);
-  
+
   // Try to get user position on mount
   React.useEffect(() => {
     if (navigator.geolocation) {
@@ -21,11 +22,11 @@ const Index = () => {
         () => {
           // Silent fail - distance will not be shown
         },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
       );
     }
   }, []);
-  
+
   const { data: restaurants, isLoading } = useQuery({
     queryKey: ["restaurants"],
     queryFn: async () => {
