@@ -48,7 +48,7 @@ export default function RestaurantMap() {
     setIsPanning(true);
     setPanStart({ x: e.clientX, y: e.clientY });
     setTranslateStart(translate);
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    containerRef.current?.setPointerCapture(e.pointerId);
   }, [scale, translate]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
@@ -95,36 +95,42 @@ export default function RestaurantMap() {
   }, [navigate]);
 
   return (
-    <div className="w-full max-w-6xl mx-auto space-y-3">
-      <div className="flex items-center gap-2 justify-end">
-        <Button variant="outline" size="icon" onClick={handleZoomIn} className="h-8 w-8">
-          <ZoomIn className="h-4 w-4" />
-        </Button>
-        <Button variant="outline" size="icon" onClick={handleZoomOut} className="h-8 w-8">
-          <ZoomOut className="h-4 w-4" />
-        </Button>
-        <Button variant="outline" size="icon" onClick={handleReset} className="h-8 w-8">
-          <RotateCcw className="h-4 w-4" />
-        </Button>
-      </div>
-      <div
-        ref={containerRef}
-        className="overflow-hidden rounded-xl shadow-lg cursor-grab active:cursor-grabbing"
-        onWheel={handleWheel}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-      >
-        <object
-          ref={objectRef}
-          type="image/svg+xml"
-          data="/images/map_citeDescartes.svg"
-          className="w-full pointer-events-auto transition-transform duration-150"
-          style={{
-            transform: `scale(${scale}) translate(${translate.x / scale}px, ${translate.y / scale}px)`,
-            transformOrigin: "center center",
-          }}
-        />
+    <div className="w-full max-w-6xl mx-auto">
+      <div className="relative rounded-xl shadow-lg overflow-hidden">
+        {/* Zoom controls overlaid on map */}
+        <div className="absolute top-3 right-3 z-10 flex flex-col gap-1.5">
+          <Button variant="secondary" size="icon" onClick={handleZoomIn} className="h-9 w-9 shadow-md bg-background/80 backdrop-blur-sm hover:bg-background">
+            <ZoomIn className="h-4 w-4" />
+          </Button>
+          <Button variant="secondary" size="icon" onClick={handleZoomOut} className="h-9 w-9 shadow-md bg-background/80 backdrop-blur-sm hover:bg-background">
+            <ZoomOut className="h-4 w-4" />
+          </Button>
+          <Button variant="secondary" size="icon" onClick={handleReset} className="h-9 w-9 shadow-md bg-background/80 backdrop-blur-sm hover:bg-background">
+            <RotateCcw className="h-4 w-4" />
+          </Button>
+        </div>
+        <div
+          ref={containerRef}
+          className="overflow-hidden touch-none select-none"
+          style={{ cursor: scale > 1 ? (isPanning ? 'grabbing' : 'grab') : 'default' }}
+          onWheel={handleWheel}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
+        >
+          <object
+            ref={objectRef}
+            type="image/svg+xml"
+            data="/images/map_citeDescartes.svg"
+            className="w-full pointer-events-none"
+            style={{
+              transform: `scale(${scale}) translate(${translate.x / scale}px, ${translate.y / scale}px)`,
+              transformOrigin: "center center",
+              willChange: 'transform',
+            }}
+          />
+        </div>
       </div>
     </div>
   );
