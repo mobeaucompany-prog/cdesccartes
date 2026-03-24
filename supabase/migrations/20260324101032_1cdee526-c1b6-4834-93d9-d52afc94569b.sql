@@ -1,0 +1,1 @@
+UPDATE public.menu_items SET image = '/images/perrier_33cl.png' WHERE id = '86d37c9e-a7d0-4226-bd7c-62004257e5a7';
