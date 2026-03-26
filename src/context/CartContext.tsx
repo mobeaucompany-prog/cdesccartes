@@ -53,6 +53,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
             prix: itemPrice,
             quantity: 1,
             image: menuItem.image || undefined,
+            selectedSize: variant?.name,
             customizations,
           },
         ];
