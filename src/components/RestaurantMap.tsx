@@ -1,309 +1,144 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { ZoomIn, ZoomOut, RotateCcw, Navigation } from "lucide-react";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import { Button } from "@/components/ui/button";
+import { Navigation } from "lucide-react";
 
-// GPS bounds of the SVG map (corners)
-// Bottom-left: 48.84328N, 2.58171E
-// Bottom-right: 48.83669N, 2.58406E  
-// Top-right: 48.83592N, 2.59691E
-// Top-left (inferred): 48.84251N, 2.59456E
-const MAP_BOUNDS = {
-  topLeft: { lat: 48.84251, lng: 2.59456 },
-  topRight: { lat: 48.83592, lng: 2.59691 },
-  bottomLeft: { lat: 48.84328, lng: 2.58171 },
-  bottomRight: { lat: 48.83669, lng: 2.58406 },
-};
-
-function gpsToMapPercent(lat: number, lng: number) {
-  // Bilinear interpolation using the 4 corners
-  const { topLeft, topRight, bottomLeft, bottomRight } = MAP_BOUNDS;
-  
-  // Approximate: use inverse bilinear mapping
-  // For a roughly rectangular map, linear interpolation works well
-  const avgTop = { lat: (topLeft.lat + topRight.lat) / 2, lng: (topLeft.lng + topRight.lng) / 2 };
-  const avgBottom = { lat: (bottomLeft.lat + bottomRight.lat) / 2, lng: (bottomLeft.lng + bottomRight.lng) / 2 };
-  const avgLeft = { lat: (topLeft.lat + bottomLeft.lat) / 2, lng: (topLeft.lng + bottomLeft.lng) / 2 };
-  const avgRight = { lat: (topRight.lat + bottomRight.lat) / 2, lng: (topRight.lng + bottomRight.lng) / 2 };
-
-  // Y: top=0%, bottom=100% (lat decreases going down on this map, but bottom-left has highest lat)
-  // Actually bottom-left lat (48.84328) > top-right lat (48.83592), so higher lat = bottom of map
-  const latRange = avgBottom.lat - avgTop.lat; // positive
-  const yPct = ((lat - avgTop.lat) / latRange) * 100;
-
-  // X: left=0%, right=100%
-  const lngRange = avgRight.lng - avgLeft.lng; // positive
-  const xPct = ((lng - avgLeft.lng) / lngRange) * 100;
-
-  return { x: xPct, y: yPct };
-}
-
-// Restaurant clickable zones as percentages of SVG dimensions (viewBox 1536x1024)
-const RESTAURANT_ZONES = [
+const RESTAURANTS = [
   {
-    id: "GLaDalle",
-    path: "/restaurant/45af1a7b-368e-4fb2-85fa-db23a11c23d6",
-    label: "G La Dalle",
-    xMin: 1,
-    xMax: 10,
-    yMin: 55,
-    yMax: 67,
+    id: "45af1a7b-368e-4fb2-85fa-db23a11c23d6",
+    name: "G La Dalle",
+    lat: 48.84095,
+    lng: 2.58698,
   },
   {
-    id: "GoodAndTasty",
-    path: "/restaurant/7ff1f514-1bb0-4a67-a5e3-661ece50dbd3",
-    label: "Good and Tasty",
-    xMin: 27,
-    xMax: 38,
-    yMin: 55,
-    yMax: 70,
+    id: "7ff1f514-1bb0-4a67-a5e3-661ece50dbd3",
+    name: "Good and Tasty",
+    lat: 48.84112,
+    lng: 2.58721,
   },
   {
-    id: "AuPtiCreux",
-    path: "/restaurant/977c4d48-3161-4845-94a3-6a7ef05c9f0e",
-    label: "Au Petit Creux",
-    xMin: 75,
-    xMax: 90,
-    yMin: 70,
-    yMax: 83,
+    id: "977c4d48-3161-4845-94a3-6a7ef05c9f0e",
+    name: "Au Petit Creux",
+    lat: 48.84073,
+    lng: 2.58810,
   },
 ];
 
+const restaurantIcon = new L.Icon({
+  iconUrl:
+    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png",
+  shadowUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+
+const userIcon = new L.Icon({
+  iconUrl:
+    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
+  shadowUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+
+const DEFAULT_CENTER: [number, number] = [48.8408, 2.5872];
+
 export default function RestaurantMap() {
-  const objectRef = useRef<HTMLObjectElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<L.Map | null>(null);
+  const userMarkerRef = useRef<L.Marker | null>(null);
   const navigate = useNavigate();
-  const [scale, setScale] = useState(1);
-  const [translate, setTranslate] = useState({ x: 0, y: 0 });
-  const [isPanning, setIsPanning] = useState(false);
-  const [userPosition, setUserPosition] = useState<{ x: number; y: number } | null>(null);
   const [isLocating, setIsLocating] = useState(false);
-  const panStart = useRef({ x: 0, y: 0 });
-  const translateStart = useRef({ x: 0, y: 0 });
 
-  const MIN_SCALE = 1;
-  const MAX_SCALE = 4;
-
-  const handleZoomIn = useCallback(() => {
-    setScale((s) => Math.min(s + 0.5, MAX_SCALE));
-  }, []);
-
-  const handleZoomOut = useCallback(() => {
-    setScale((s) => {
-      const newScale = Math.max(s - 0.5, MIN_SCALE);
-      if (newScale === MIN_SCALE) setTranslate({ x: 0, y: 0 });
-      return newScale;
-    });
-  }, []);
-
-  const handleReset = useCallback(() => {
-    setScale(1);
-    setTranslate({ x: 0, y: 0 });
-  }, []);
-
-  // Prevent page scroll when touching the map container
+  // Init map
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-    const preventScroll = (e: TouchEvent) => {
-      e.preventDefault();
-    };
-    container.addEventListener("touchmove", preventScroll, { passive: false });
-    container.addEventListener("touchstart", preventScroll, { passive: false });
-    return () => {
-      container.removeEventListener("touchmove", preventScroll);
-      container.removeEventListener("touchstart", preventScroll);
-    };
-  }, []);
+    if (!containerRef.current || mapRef.current) return;
 
-  // Darken SVG background (works only same-origin)
-  useEffect(() => {
-    const object = objectRef.current;
-    if (!object) return;
-    const onLoad = () => {
-      try {
-        const svgDoc = object.contentDocument;
-        if (!svgDoc) return;
-        const bg = svgDoc.getElementById("carteCartoon");
-        if (bg) bg.style.filter = "brightness(75%)";
-      } catch {
-        /* cross-origin — ignore */
-      }
-    };
-    object.addEventListener("load", onLoad);
-    try {
-      if (object.contentDocument?.readyState === "complete") onLoad();
-    } catch {}
-    return () => object.removeEventListener("load", onLoad);
-  }, []);
-
-  const handleWheel = useCallback((e: React.WheelEvent) => {
-    e.preventDefault();
-    const delta = e.deltaY > 0 ? -0.3 : 0.3;
-    setScale((s) => {
-      const newScale = Math.min(Math.max(s + delta, MIN_SCALE), MAX_SCALE);
-      if (newScale === MIN_SCALE) setTranslate({ x: 0, y: 0 });
-      return newScale;
+    const map = L.map(containerRef.current, {
+      center: DEFAULT_CENTER,
+      zoom: 17,
+      scrollWheelZoom: true,
     });
-  }, []);
 
-  const handlePointerDown = useCallback(
-    (e: React.PointerEvent) => {
-      setIsPanning(true);
-      panStart.current = { x: e.clientX, y: e.clientY };
-      translateStart.current = { ...translate };
-      containerRef.current?.setPointerCapture(e.pointerId);
-    },
-    [translate],
-  );
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    }).addTo(map);
 
-  const handlePointerMove = useCallback(
-    (e: React.PointerEvent) => {
-      if (!isPanning || scale <= 1) return;
-      setTranslate({
-        x: translateStart.current.x + (e.clientX - panStart.current.x),
-        y: translateStart.current.y + (e.clientY - panStart.current.y),
+    // Add restaurant markers
+    RESTAURANTS.forEach((r) => {
+      const marker = L.marker([r.lat, r.lng], { icon: restaurantIcon }).addTo(map);
+      marker.bindPopup(
+        `<div style="text-align:center;min-width:120px;">
+          <div style="font-weight:700;font-size:14px;margin-bottom:6px;">${r.name}</div>
+          <a href="/restaurant/${r.id}" style="font-size:12px;font-weight:600;color:hsl(24,95%,53%);text-decoration:underline;">Voir le menu →</a>
+        </div>`
+      );
+      marker.on("click", () => {
+        marker.openPopup();
       });
-    },
-    [isPanning, scale],
-  );
+    });
 
-  const handlePointerUp = useCallback(
-    (e: React.PointerEvent) => {
-      if (!isPanning) return;
-      const dx = Math.abs(e.clientX - panStart.current.x);
-      const dy = Math.abs(e.clientY - panStart.current.y);
+    mapRef.current = map;
 
-      // Tap detection (not a drag)
-      if (dx < 8 && dy < 8) {
-        const container = containerRef.current;
-        if (!container) {
-          setIsPanning(false);
-          return;
+    return () => {
+      map.remove();
+      mapRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleLocate = useCallback(() => {
+    if (isLocating || !navigator.geolocation) return;
+    setIsLocating(true);
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const latlng: [number, number] = [pos.coords.latitude, pos.coords.longitude];
+
+        if (userMarkerRef.current) {
+          userMarkerRef.current.setLatLng(latlng);
+        } else if (mapRef.current) {
+          userMarkerRef.current = L.marker(latlng, { icon: userIcon })
+            .addTo(mapRef.current)
+            .bindPopup('<div style="text-align:center;font-weight:600;">📍 Vous êtes ici</div>');
         }
 
-        const rect = container.getBoundingClientRect();
-        const cx = rect.width / 2;
-        const cy = rect.height / 2;
-
-        // Reverse the CSS transform to get position in original SVG space
-        const relX = e.clientX - rect.left;
-        const relY = e.clientY - rect.top;
-        const svgX = (relX - cx) / scale - translate.x / scale + cx;
-        const svgY = (relY - cy) / scale - translate.y / scale + cy;
-
-        // Convert to percentage of container
-        const pctX = (svgX / rect.width) * 100;
-        const pctY = (svgY / rect.height) * 100;
-
-        // Check if tap is inside any restaurant zone
-        for (const zone of RESTAURANT_ZONES) {
-          if (pctX >= zone.xMin && pctX <= zone.xMax && pctY >= zone.yMin && pctY <= zone.yMax) {
-            navigate(zone.path);
-            setIsPanning(false);
-            return;
-          }
-        }
-      }
-      setIsPanning(false);
-    },
-    [isPanning, scale, translate, navigate],
-  );
+        mapRef.current?.setView(latlng, 17);
+        setIsLocating(false);
+      },
+      () => setIsLocating(false),
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }, [isLocating]);
 
   return (
     <div className="w-full max-w-6xl mx-auto">
-      <div className="relative rounded-xl shadow-lg overflow-hidden">
-        {/* Zoom controls */}
-        <div className="absolute top-3 right-3 z-20 flex flex-col gap-1.5">
+      <div className="relative rounded-2xl overflow-hidden shadow-card border border-border">
+        {/* Locate button */}
+        <div className="absolute top-3 right-3 z-[1000]">
           <Button
             variant="secondary"
             size="icon"
-            onClick={handleZoomIn}
+            onClick={handleLocate}
             className="h-9 w-9 shadow-md bg-background/80 backdrop-blur-sm hover:bg-background"
           >
-            <ZoomIn className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="secondary"
-            size="icon"
-            onClick={handleZoomOut}
-            className="h-9 w-9 shadow-md bg-background/80 backdrop-blur-sm hover:bg-background"
-          >
-            <ZoomOut className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="secondary"
-            size="icon"
-            onClick={handleReset}
-            className="h-9 w-9 shadow-md bg-background/80 backdrop-blur-sm hover:bg-background"
-          >
-            <RotateCcw className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="secondary"
-            size="icon"
-            onClick={() => {
-              if (isLocating) return;
-              setIsLocating(true);
-              navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                  const mapped = gpsToMapPercent(pos.coords.latitude, pos.coords.longitude);
-                  if (mapped.x >= 0 && mapped.x <= 100 && mapped.y >= 0 && mapped.y <= 100) {
-                    setUserPosition(mapped);
-                  } else {
-                    setUserPosition(null);
-                  }
-                  setIsLocating(false);
-                },
-                () => setIsLocating(false),
-                { enableHighAccuracy: true, timeout: 10000 }
-              );
-            }}
-            className="h-9 w-9 shadow-md bg-background/80 backdrop-blur-sm hover:bg-background"
-          >
-            <Navigation className={`h-4 w-4 ${isLocating ? 'animate-pulse text-primary' : ''}`} />
+            <Navigation className={`h-4 w-4 ${isLocating ? "animate-pulse text-primary" : ""}`} />
           </Button>
         </div>
 
         <div
           ref={containerRef}
-          className="overflow-hidden select-none"
-          style={{ cursor: scale > 1 ? (isPanning ? "grabbing" : "grab") : "pointer", touchAction: "none" }}
-          onWheel={handleWheel}
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          onPointerCancel={() => setIsPanning(false)}
-        >
-          <object
-            ref={objectRef}
-            type="image/svg+xml"
-            data="/images/map_citeDescartes.svg"
-            className="w-full pointer-events-none block"
-            style={{
-              transform: `scale(${scale}) translate(${translate.x / scale}px, ${translate.y / scale}px)`,
-              transformOrigin: "center center",
-              willChange: "transform",
-            }}
-          />
-          {userPosition && (
-            <div
-              className="absolute pointer-events-none"
-              style={{
-                left: `${userPosition.x}%`,
-                top: `${userPosition.y}%`,
-                transform: `scale(${scale}) translate(${translate.x / scale}px, ${translate.y / scale}px)`,
-                transformOrigin: "center center",
-                zIndex: 10,
-              }}
-            >
-              <div className="relative -translate-x-1/2 -translate-y-1/2">
-                <div className="w-4 h-4 rounded-full bg-blue-500 border-2 border-white shadow-lg" />
-                <div className="absolute inset-0 w-4 h-4 rounded-full bg-blue-500/40 animate-ping" />
-              </div>
-            </div>
-          )}
-        </div>
+          className="w-full"
+          style={{ height: "400px" }}
+        />
       </div>
     </div>
   );
