@@ -31,13 +31,16 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         itemId = `${menuItem.id}-${variant.name}`;
         itemPrice = variant.price;
         itemName = `${menuItem.nom} (${variant.name})`;
-      } else if (customizations && customizations.length > 0) {
+      }
+      
+      if (customizations && customizations.length > 0) {
         // Create unique ID based on customization selections
         const customKey = customizations.map(c => c.option_name).sort().join('-');
-        itemId = `${menuItem.id}-custom-${Date.now()}`;
-        itemPrice = menuItem.prix + (customizationSupplement || 0);
+        itemId = `${itemId || menuItem.id}-custom-${Date.now()}`;
+        itemPrice = (variant ? variant.price : menuItem.prix) + (customizationSupplement || 0);
         const optionNames = customizations.map(c => c.option_name).slice(0, 3).join(', ');
-        itemName = `${menuItem.nom} (${optionNames}${customizations.length > 3 ? '...' : ''})`;
+        const sizeLabel = variant ? `${variant.name} - ` : '';
+        itemName = `${menuItem.nom} (${sizeLabel}${optionNames}${customizations.length > 3 ? '...' : ''})`;
       }
       
       // For customized items, always add as new (don't merge)
@@ -50,6 +53,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
             prix: itemPrice,
             quantity: 1,
             image: menuItem.image || undefined,
+            selectedSize: variant?.name,
             customizations,
           },
         ];

@@ -17,6 +17,7 @@ const MenuItemCard = ({ item, index }: MenuItemCardProps) => {
   const [isAdding, setIsAdding] = useState(false);
   const [showSizeSelector, setShowSizeSelector] = useState(false);
   const [showBowlCustomizer, setShowBowlCustomizer] = useState(false);
+  const [selectedVariant, setSelectedVariant] = useState<SizeVariant | undefined>(undefined);
   
   const cartItem = items.find(i => i.id === item.id || i.id.startsWith(`${item.id}-`));
   const isInCart = !!cartItem;
@@ -30,10 +31,12 @@ const MenuItemCard = ({ item, index }: MenuItemCardProps) => {
   const handleAddToCart = () => {
     if (!item.en_stock_bool) return;
     
-    if (hasCustomization) {
-      setShowBowlCustomizer(true);
-    } else if (hasVariants) {
+    // If has variants, always show size selector first
+    if (hasVariants) {
       setShowSizeSelector(true);
+    } else if (hasCustomization) {
+      setSelectedVariant(undefined);
+      setShowBowlCustomizer(true);
     } else {
       setIsAdding(true);
       addItem(item);
@@ -42,14 +45,22 @@ const MenuItemCard = ({ item, index }: MenuItemCardProps) => {
   };
 
   const handleSizeSelect = (variant: SizeVariant) => {
-    setIsAdding(true);
-    addItem(item, variant);
-    setTimeout(() => setIsAdding(false), 500);
+    if (hasCustomization) {
+      // Save variant and open customizer next
+      setSelectedVariant(variant);
+      setShowSizeSelector(false);
+      setShowBowlCustomizer(true);
+    } else {
+      setIsAdding(true);
+      addItem(item, variant);
+      setTimeout(() => setIsAdding(false), 500);
+    }
   };
 
   const handleCustomizationConfirm = (selections: SelectedOption[], totalSupplement: number) => {
     setIsAdding(true);
-    addItem(item, undefined, selections, totalSupplement);
+    addItem(item, selectedVariant, selections, totalSupplement);
+    setSelectedVariant(undefined);
     setTimeout(() => setIsAdding(false), 500);
   };
 
