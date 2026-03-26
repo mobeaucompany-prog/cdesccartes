@@ -76,6 +76,8 @@ export default function RestaurantMap() {
   const [scale, setScale] = useState(1);
   const [translate, setTranslate] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
+  const [userPosition, setUserPosition] = useState<{ x: number; y: number } | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
   const panStart = useRef({ x: 0, y: 0 });
   const translateStart = useRef({ x: 0, y: 0 });
 
@@ -237,6 +239,30 @@ export default function RestaurantMap() {
           >
             <RotateCcw className="h-4 w-4" />
           </Button>
+          <Button
+            variant="secondary"
+            size="icon"
+            onClick={() => {
+              if (isLocating) return;
+              setIsLocating(true);
+              navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                  const mapped = gpsToMapPercent(pos.coords.latitude, pos.coords.longitude);
+                  if (mapped.x >= 0 && mapped.x <= 100 && mapped.y >= 0 && mapped.y <= 100) {
+                    setUserPosition(mapped);
+                  } else {
+                    setUserPosition(null);
+                  }
+                  setIsLocating(false);
+                },
+                () => setIsLocating(false),
+                { enableHighAccuracy: true, timeout: 10000 }
+              );
+            }}
+            className="h-9 w-9 shadow-md bg-background/80 backdrop-blur-sm hover:bg-background"
+          >
+            <Navigation className={`h-4 w-4 ${isLocating ? 'animate-pulse text-primary' : ''}`} />
+          </Button>
         </div>
 
         <div
@@ -260,6 +286,23 @@ export default function RestaurantMap() {
               willChange: "transform",
             }}
           />
+          {userPosition && (
+            <div
+              className="absolute pointer-events-none"
+              style={{
+                left: `${userPosition.x}%`,
+                top: `${userPosition.y}%`,
+                transform: `scale(${scale}) translate(${translate.x / scale}px, ${translate.y / scale}px)`,
+                transformOrigin: "center center",
+                zIndex: 10,
+              }}
+            >
+              <div className="relative -translate-x-1/2 -translate-y-1/2">
+                <div className="w-4 h-4 rounded-full bg-blue-500 border-2 border-white shadow-lg" />
+                <div className="absolute inset-0 w-4 h-4 rounded-full bg-blue-500/40 animate-ping" />
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
