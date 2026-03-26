@@ -1,7 +1,42 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
+import { ZoomIn, ZoomOut, RotateCcw, Navigation } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+// GPS bounds of the SVG map (corners)
+// Bottom-left: 48.84328N, 2.58171E
+// Bottom-right: 48.83669N, 2.58406E  
+// Top-right: 48.83592N, 2.59691E
+// Top-left (inferred): 48.84251N, 2.59456E
+const MAP_BOUNDS = {
+  topLeft: { lat: 48.84251, lng: 2.59456 },
+  topRight: { lat: 48.83592, lng: 2.59691 },
+  bottomLeft: { lat: 48.84328, lng: 2.58171 },
+  bottomRight: { lat: 48.83669, lng: 2.58406 },
+};
+
+function gpsToMapPercent(lat: number, lng: number) {
+  // Bilinear interpolation using the 4 corners
+  const { topLeft, topRight, bottomLeft, bottomRight } = MAP_BOUNDS;
+  
+  // Approximate: use inverse bilinear mapping
+  // For a roughly rectangular map, linear interpolation works well
+  const avgTop = { lat: (topLeft.lat + topRight.lat) / 2, lng: (topLeft.lng + topRight.lng) / 2 };
+  const avgBottom = { lat: (bottomLeft.lat + bottomRight.lat) / 2, lng: (bottomLeft.lng + bottomRight.lng) / 2 };
+  const avgLeft = { lat: (topLeft.lat + bottomLeft.lat) / 2, lng: (topLeft.lng + bottomLeft.lng) / 2 };
+  const avgRight = { lat: (topRight.lat + bottomRight.lat) / 2, lng: (topRight.lng + bottomRight.lng) / 2 };
+
+  // Y: top=0%, bottom=100% (lat decreases going down on this map, but bottom-left has highest lat)
+  // Actually bottom-left lat (48.84328) > top-right lat (48.83592), so higher lat = bottom of map
+  const latRange = avgBottom.lat - avgTop.lat; // positive
+  const yPct = ((lat - avgTop.lat) / latRange) * 100;
+
+  // X: left=0%, right=100%
+  const lngRange = avgRight.lng - avgLeft.lng; // positive
+  const xPct = ((lng - avgLeft.lng) / lngRange) * 100;
+
+  return { x: xPct, y: yPct };
+}
 
 // Restaurant clickable zones as percentages of SVG dimensions (viewBox 1536x1024)
 const RESTAURANT_ZONES = [
@@ -41,6 +76,8 @@ export default function RestaurantMap() {
   const [scale, setScale] = useState(1);
   const [translate, setTranslate] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
+  const [userPosition, setUserPosition] = useState<{ x: number; y: number } | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
   const panStart = useRef({ x: 0, y: 0 });
   const translateStart = useRef({ x: 0, y: 0 });
 
@@ -202,6 +239,30 @@ export default function RestaurantMap() {
           >
             <RotateCcw className="h-4 w-4" />
           </Button>
+          <Button
+            variant="secondary"
+            size="icon"
+            onClick={() => {
+              if (isLocating) return;
+              setIsLocating(true);
+              navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                  const mapped = gpsToMapPercent(pos.coords.latitude, pos.coords.longitude);
+                  if (mapped.x >= 0 && mapped.x <= 100 && mapped.y >= 0 && mapped.y <= 100) {
+                    setUserPosition(mapped);
+                  } else {
+                    setUserPosition(null);
+                  }
+                  setIsLocating(false);
+                },
+                () => setIsLocating(false),
+                { enableHighAccuracy: true, timeout: 10000 }
+              );
+            }}
+            className="h-9 w-9 shadow-md bg-background/80 backdrop-blur-sm hover:bg-background"
+          >
+            <Navigation className={`h-4 w-4 ${isLocating ? 'animate-pulse text-primary' : ''}`} />
+          </Button>
         </div>
 
         <div
@@ -225,6 +286,23 @@ export default function RestaurantMap() {
               willChange: "transform",
             }}
           />
+          {userPosition && (
+            <div
+              className="absolute pointer-events-none"
+              style={{
+                left: `${userPosition.x}%`,
+                top: `${userPosition.y}%`,
+                transform: `scale(${scale}) translate(${translate.x / scale}px, ${translate.y / scale}px)`,
+                transformOrigin: "center center",
+                zIndex: 10,
+              }}
+            >
+              <div className="relative -translate-x-1/2 -translate-y-1/2">
+                <div className="w-4 h-4 rounded-full bg-blue-500 border-2 border-white shadow-lg" />
+                <div className="absolute inset-0 w-4 h-4 rounded-full bg-blue-500/40 animate-ping" />
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
