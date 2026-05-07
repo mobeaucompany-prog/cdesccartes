@@ -56,7 +56,7 @@ const RestaurantMenu = () => {
   }, [id, setRestaurantId]);
 
   // Category display order (Dessert and Boissons last)
-  const categoryOrder = ['Pizza', 'Bowl', 'Burger', 'Sandwich', 'Tacos', 'Tex Mex', 'Salades', 'Dessert', 'Boissons'];
+  const categoryOrder = ['Menu midi', 'Pizza', 'Bowl', 'Burger', 'Sandwich', 'Tacos', 'Tex Mex', 'Salades', 'Dessert', 'Boissons'];
 
   // Group items by category
   const groupedItems = useMemo(() => {
