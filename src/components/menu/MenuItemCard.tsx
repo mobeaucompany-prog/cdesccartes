@@ -45,8 +45,8 @@ const MenuItemCard = ({ item, index }: MenuItemCardProps) => {
   };
 
   const handleSizeSelect = (variant: SizeVariant) => {
-    if (hasCustomization) {
-      // Save variant and open customizer next
+    // Skip customization when "Seul" variant is chosen (menu options only apply to "Menu")
+    if (hasCustomization && variant.name !== 'Seul') {
       setSelectedVariant(variant);
       setShowSizeSelector(false);
       setShowBowlCustomizer(true);
