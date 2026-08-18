@@ -21,3 +21,14 @@ END $$;
 
 CREATE INDEX IF NOT EXISTS idx_orders_payment_status ON public.orders(payment_status);
 CREATE INDEX IF NOT EXISTS idx_orders_stripe_checkout_session_id ON public.orders(stripe_checkout_session_id);
+
+-- Existing orders receive the default "paid" value. New Stripe orders are immediately
+-- switched to "pending" by the checkout edge function. Authenticated restaurant users
+-- cannot read them until the signed Stripe webhook confirms payment.
+DROP POLICY IF EXISTS "stripe_paid_orders_only" ON public.orders;
+CREATE POLICY "stripe_paid_orders_only"
+ON public.orders
+AS RESTRICTIVE
+FOR SELECT
+TO authenticated
+USING (payment_status = 'paid');
