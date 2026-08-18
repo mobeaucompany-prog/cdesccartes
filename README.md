@@ -45,3 +45,7 @@ Le restaurateur ne voit pas la commande tant que le webhook n'a pas confirmé le
 ## Sécurité des prix
 
 Le frontend n'est pas la source de vérité des montants. La fonction Edge `create-checkout-session` réutilise la fonction SQL existante `create_order_secure` afin que les prix de la commande soient validés côté serveur avant la création de la session Stripe.
+
+## Déploiement
+
+Avant le premier test réel, appliquer la migration Supabase ajoutant `stripe_account_id` et les champs de paiement, puis déployer les fonctions Edge `create-checkout-session` et `stripe-webhook`.
