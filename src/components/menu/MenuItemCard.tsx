@@ -18,7 +18,7 @@ const MenuItemCard = ({ item, index }: MenuItemCardProps) => {
   const [showSizeSelector, setShowSizeSelector] = useState(false);
   const [showBowlCustomizer, setShowBowlCustomizer] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState<SizeVariant | undefined>(undefined);
-  
+
   const cartItem = items.find(i => i.id === item.id || i.id.startsWith(`${item.id}-`));
   const isInCart = !!cartItem;
   const totalQuantity = items
@@ -30,8 +30,7 @@ const MenuItemCard = ({ item, index }: MenuItemCardProps) => {
 
   const handleAddToCart = () => {
     if (!item.en_stock_bool) return;
-    
-    // If has variants, always show size selector first
+
     if (hasVariants) {
       setShowSizeSelector(true);
     } else if (hasCustomization) {
@@ -45,7 +44,6 @@ const MenuItemCard = ({ item, index }: MenuItemCardProps) => {
   };
 
   const handleSizeSelect = (variant: SizeVariant) => {
-    // Skip customization when "Seul" variant is chosen (menu options only apply to "Menu")
     if (hasCustomization && variant.name !== 'Seul') {
       setSelectedVariant(variant);
       setShowSizeSelector(false);
@@ -64,93 +62,78 @@ const MenuItemCard = ({ item, index }: MenuItemCardProps) => {
     setTimeout(() => setIsAdding(false), 500);
   };
 
-  // Display price range if variants exist
-  const priceDisplay = hasVariants 
+  const priceDisplay = hasVariants
     ? `${Math.min(...item.variants!.map(v => v.price)).toFixed(2)} €`
     : `${item.prix.toFixed(2)} €`;
 
   return (
     <>
-      <article 
-        className={`group bg-card rounded-xl overflow-hidden shadow-card hover:shadow-elevated transition-all duration-300 opacity-0 animate-fade-in ${
-          !item.en_stock_bool ? 'opacity-60' : 'hover:scale-[1.02]'
+      <article
+        className={`group relative flex min-h-[138px] overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm transition-all duration-300 opacity-0 animate-fade-in ${
+          !item.en_stock_bool ? 'opacity-60' : 'hover:-translate-y-0.5 hover:shadow-card'
         }`}
-        style={{ animationDelay: `${index * 0.05}s`, animationFillMode: 'forwards' }}
+        style={{ animationDelay: `${index * 0.04}s`, animationFillMode: 'forwards' }}
       >
-        <div className="flex gap-4 p-4">
-          {/* Image */}
-          <div className="relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden">
-            <img
-              src={item.image || 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400'}
-              alt={item.nom}
-              className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110"
-            />
-            {!item.en_stock_bool && (
-              <div className="absolute inset-0 bg-background/70 flex items-center justify-center">
-                <span className="text-xs font-medium text-destructive bg-destructive/10 px-2 py-1 rounded">
-                  Rupture
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Content */}
-          <div className="flex-1 flex flex-col justify-between min-w-0">
-            <div>
-              <h4 className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">
+        <div className="flex-1 min-w-0 p-4 sm:p-5 flex flex-col justify-between">
+          <div>
+            <div className="flex items-start gap-2 justify-between">
+              <h4 className="font-bold text-base sm:text-lg leading-snug text-foreground pr-1">
                 {item.nom}
               </h4>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="text-xs text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">
-                  {item.categorie}
-                </span>
-                {hasVariants && (
-                  <span className="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                    {item.variants!.some(v => v.name === 'Menu' || v.name === 'Seul') ? '2 choix' : '2 tailles'}
-                  </span>
-                )}
-                {hasCustomization && (
-                  <span className="text-xs text-success bg-success/10 px-2 py-0.5 rounded-full">
-                    Personnalisable
-                  </span>
-                )}
-              </div>
             </div>
-            
-            <div className="flex items-center justify-between mt-2">
-              <div className="flex flex-col">
-                <span className="font-bold text-lg text-primary">
-                  {priceDisplay}
+
+            <div className="flex flex-wrap items-center gap-1.5 mt-2">
+              {hasVariants && (
+                <span className="text-[11px] font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">
+                  Plusieurs choix
                 </span>
-                {hasVariants && (
-                  <span className="text-xs text-muted-foreground">à partir de</span>
-                )}
-              </div>
-              
-              <Button
-                size="icon"
-                variant={isInCart ? "success" : "default"}
-                className={`rounded-full transition-all duration-300 ${
-                  isAdding ? 'scale-110' : ''
-                } ${!item.en_stock_bool ? 'opacity-50 cursor-not-allowed' : ''}`}
-                onClick={handleAddToCart}
-                disabled={!item.en_stock_bool}
-              >
-                {isInCart ? (
-                  <>
-                    <Check className="w-4 h-4" />
-                    {totalQuantity > 1 && (
-                      <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-primary-foreground text-xs rounded-full flex items-center justify-center">
-                        {totalQuantity}
-                      </span>
-                    )}
-                  </>
-                ) : (
-                  <Plus className="w-4 h-4" />
-                )}
-              </Button>
+              )}
+              {hasCustomization && (
+                <span className="text-[11px] font-medium text-success bg-success/10 px-2 py-1 rounded-full">
+                  Personnalisable
+                </span>
+              )}
+              {!item.en_stock_bool && (
+                <span className="text-[11px] font-semibold text-destructive bg-destructive/10 px-2 py-1 rounded-full">
+                  Indisponible
+                </span>
+              )}
             </div>
           </div>
+
+          <div className="flex items-end justify-between gap-3 mt-4">
+            <div className="min-w-0">
+              {hasVariants && <p className="text-[11px] text-muted-foreground mb-0.5">À partir de</p>}
+              <p className="font-extrabold text-lg text-foreground">{priceDisplay}</p>
+            </div>
+
+            <Button
+              size="icon"
+              variant={isInCart ? 'success' : 'default'}
+              aria-label={`Ajouter ${item.nom} au panier`}
+              className={`relative h-10 w-10 sm:h-11 sm:w-11 rounded-full shrink-0 shadow-md transition-all duration-300 ${
+                isAdding ? 'scale-110' : ''
+              } ${!item.en_stock_bool ? 'opacity-50 cursor-not-allowed' : ''}`}
+              onClick={handleAddToCart}
+              disabled={!item.en_stock_bool}
+            >
+              {isInCart ? <Check className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
+              {totalQuantity > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1 bg-foreground text-background text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-card">
+                  {totalQuantity}
+                </span>
+              )}
+            </Button>
+          </div>
+        </div>
+
+        <div className="relative w-28 sm:w-36 shrink-0 bg-muted/40 overflow-hidden">
+          <img
+            src={item.image || 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=500'}
+            alt={item.nom}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+          {!item.en_stock_bool && <div className="absolute inset-0 bg-background/45 backdrop-blur-[1px]" />}
         </div>
       </article>
 
