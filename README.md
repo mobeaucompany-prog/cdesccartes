@@ -30,9 +30,9 @@ Chaque restaurant doit avoir son identifiant de compte Connect dans `restaurants
 
 ### Webhook Stripe
 
-Configurer Stripe pour envoyer les événements suivants vers :
+Pour le projet Supabase actuel (`ugqerugkvwijqvgtmozq`), configurer Stripe pour envoyer les événements vers :
 
-`https://<PROJECT_REF>.supabase.co/functions/v1/stripe-webhook`
+`https://ugqerugkvwijqvgtmozq.supabase.co/functions/v1/stripe-webhook`
 
 Événements :
 
