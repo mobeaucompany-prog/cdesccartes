@@ -11,6 +11,7 @@ export interface Restaurant {
   adresse: string | null;
   telephone: string | null;
   horaires: Record<string, string> | null;
+  stripe_account_id?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -34,7 +35,6 @@ export interface MenuItem {
   updated_at: string;
 }
 
-// Helper to parse variants and customization from JSON
 export function parseMenuItemVariants(data: unknown): MenuItem[] {
   if (!Array.isArray(data)) return [];
   return data.map((item: Record<string, unknown>) => ({
@@ -52,6 +52,10 @@ export interface Order {
   status: 'pending' | 'accepted' | 'rejected' | 'ready';
   pickup_time: string;
   restaurant_id: string;
+  payment_status?: 'pending' | 'paid' | 'failed' | 'refunded';
+  stripe_checkout_session_id?: string | null;
+  stripe_payment_intent_id?: string | null;
+  paid_at?: string | null;
   created_at: string;
 }
 
