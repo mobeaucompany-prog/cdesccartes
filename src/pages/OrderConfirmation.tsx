@@ -8,9 +8,10 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Clock3, Home, PackageCheck, RefreshCw } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useCart } from '@/context/CartContext';
 
 const statusMessages = {
-  pending: 'Votre commande a bien été transmise au restaurant. Elle attend sa confirmation.',
+  pending: 'Votre paiement est confirmé. La commande attend maintenant la confirmation du restaurant.',
   accepted: 'Le restaurant a accepté votre commande et la prépare maintenant.',
   rejected: "Le restaurant n'a pas pu accepter votre commande.",
   ready: 'Votre commande est prête. Vous pouvez venir la récupérer.',
@@ -27,8 +28,14 @@ const OrderConfirmation = () => {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
   const trackingToken = searchParams.get('token');
+  const paidReturn = searchParams.get('paid') === '1';
   const navigate = useNavigate();
+  const { clearCart } = useCart();
   const [order, setOrder] = useState<Order | null>(null);
+
+  useEffect(() => {
+    if (paidReturn) clearCart();
+  }, [paidReturn, clearCart]);
 
   const { isLoading, refetch, isFetching } = useQuery({
     queryKey: ['order', id, trackingToken],
