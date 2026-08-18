@@ -1,6 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useMutation } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/layout/Header';
 import CartItemRow from '@/components/cart/CartItemRow';
@@ -14,12 +13,22 @@ import { ArrowLeft, Clock3, CreditCard, ShieldCheck, ShoppingBag, Store } from '
 
 const Cart = () => {
   const navigate = useNavigate();
-  const { items, getTotalPrice, clearCart, restaurantId } = useCart();
+  const [searchParams] = useSearchParams();
+  const { items, getTotalPrice, restaurantId } = useCart();
   const [clientName, setClientName] = useState('');
   const [pickupTime, setPickupTime] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
 
   const totalPrice = getTotalPrice();
+
+  useEffect(() => {
+    if (searchParams.get('payment') === 'cancelled') {
+      toast({
+        title: 'Paiement annulé',
+        description: 'Votre panier a été conservé. Vous pouvez réessayer quand vous voulez.',
+      });
+    }
+  }, [searchParams]);
 
   const getPickupTimes = () => {
     const times: string[] = [];
@@ -36,40 +45,7 @@ const Cart = () => {
     return times;
   };
 
-  const createOrderMutation = useMutation({
-    mutationFn: async () => {
-      if (!restaurantId) throw new Error('Restaurant non sélectionné');
-
-      const { data, error } = await supabase
-        .rpc('create_order_secure', {
-          p_client_name: clientName.trim(),
-          p_items: JSON.parse(JSON.stringify(items)),
-          p_pickup_time: pickupTime,
-          p_restaurant_id: restaurantId,
-        });
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (data) => {
-      clearCart();
-      navigate(`/order/${data.id}?token=${data.tracking_token}`);
-      toast({
-        title: 'Commande envoyée !',
-        description: 'Le restaurant va recevoir votre commande.',
-      });
-    },
-    onError: () => {
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de créer la commande. Réessayez.',
-        variant: 'destructive',
-      });
-      setIsProcessing(false);
-    },
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!clientName.trim()) {
@@ -90,12 +66,40 @@ const Cart = () => {
       return;
     }
 
+    if (!restaurantId) {
+      toast({
+        title: 'Restaurant introuvable',
+        description: 'Retournez au restaurant et ajoutez de nouveau un article.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsProcessing(true);
 
-    // Temporary flow until the real Stripe checkout is connected.
-    setTimeout(() => {
-      createOrderMutation.mutate();
-    }, 1200);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+        body: {
+          clientName: clientName.trim(),
+          pickupTime,
+          restaurantId,
+          items: JSON.parse(JSON.stringify(items)),
+        },
+      });
+
+      if (error) throw error;
+      if (!data?.url) throw new Error(data?.error || 'URL Stripe introuvable');
+
+      window.location.assign(data.url);
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: 'Paiement indisponible',
+        description: error instanceof Error ? error.message : 'Impossible d’ouvrir le paiement Stripe. Réessayez.',
+        variant: 'destructive',
+      });
+      setIsProcessing(false);
+    }
   };
 
   if (items.length === 0) {
@@ -129,7 +133,7 @@ const Cart = () => {
         <div className="mb-6 sm:mb-8">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary mb-1">Click & Collect</p>
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">Finalisez votre commande</h1>
-          <p className="text-muted-foreground mt-2">Choisissez votre heure de retrait puis confirmez votre panier.</p>
+          <p className="text-muted-foreground mt-2">Choisissez votre heure de retrait puis payez de façon sécurisée.</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.45fr)_minmax(340px,0.75fr)] gap-5 lg:gap-8 items-start">
@@ -180,6 +184,7 @@ const Cart = () => {
                   value={clientName}
                   onChange={(e) => setClientName(e.target.value)}
                   className="h-12 bg-background rounded-xl"
+                  autoComplete="name"
                 />
               </div>
 
@@ -207,7 +212,7 @@ const Cart = () => {
                   <span className="font-medium">{totalPrice.toFixed(2)} €</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Frais de service</span>
+                  <span className="text-muted-foreground">Frais de service étudiant</span>
                   <span className="font-medium">0,00 €</span>
                 </div>
                 <div className="border-t border-border pt-3 flex justify-between items-end">
@@ -220,19 +225,19 @@ const Cart = () => {
                 {isProcessing ? (
                   <>
                     <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin mr-2" />
-                    Validation...
+                    Ouverture de Stripe...
                   </>
                 ) : (
                   <>
                     <CreditCard className="w-5 h-5 mr-2" />
-                    Continuer · {totalPrice.toFixed(2)} €
+                    Payer {totalPrice.toFixed(2)} €
                   </>
                 )}
               </Button>
 
               <div className="flex items-start gap-2 text-xs text-muted-foreground">
                 <ShieldCheck className="w-4 h-4 text-success shrink-0 mt-0.5" />
-                <span>Le paiement Stripe réel sera branché lors de la phase paiement. Le parcours actuel conserve le fonctionnement de test existant.</span>
+                <span>Paiement sécurisé par Stripe. La commande n'apparaît au restaurateur qu'après confirmation du paiement.</span>
               </div>
             </form>
           </aside>
