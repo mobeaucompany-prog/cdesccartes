@@ -1,5 +1,11 @@
 # Au P'tit Creux
 
+## Boissons vérifiées sur les photos
+
+Coca-Cola original, zéro, cherry et vanille; Oasis tropical et cassis framboise; Perrier; Schweppes Agrumes; 7UP et 7UP mojito; Orangina; Lipton Peach. Heineken reste vendu séparément. La seconde bouteille de bière n'est pas ajoutée faute de référence suffisamment certaine. Les photos confirment les références, pas le stock actuel.
+
+Appliquer également `20260910100000_creux_drink_labels.sql` après la migration de prix pour préciser le libellé Oasis en préservant son stock. Le configurateur récupère automatiquement les boissons en stock depuis la base.
+
 ## Activation
 
 1. Appliquer les migrations de la branche existante, notamment celle Stripe du 18 août, puis `20260909160000_creux_pricing.sql`. La migration exige un restaurant existant unique et les sept plats du seed déjà exécuté.
