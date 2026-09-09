@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Restaurant, MenuItem, parseMenuItemVariants } from '@/types/database';
 import Header from '@/components/layout/Header';
 import MenuItemCard from '@/components/menu/MenuItemCard';
+import { isCreux } from '@/lib/creux';
 import FloatingCart from '@/components/cart/FloatingCart';
 import { useCart } from '@/context/CartContext';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -215,7 +216,7 @@ const RestaurantMenu = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                   {groupedItems[category].map((item, index) => (
-                    <MenuItemCard key={item.id} item={item} index={index} />
+                    <MenuItemCard key={item.id} item={item} index={index} creuxMenu={isCreux(restaurant.nom) ? menuItems : undefined} />
                   ))}
                 </div>
               </section>

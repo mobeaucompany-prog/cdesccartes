@@ -6,13 +6,17 @@ import { useCart } from '@/context/CartContext';
 import { useState } from 'react';
 import SizeSelector from './SizeSelector';
 import BowlCustomizer from './BowlCustomizer';
+import CreuxCustomizer from './CreuxCustomizer';
+import { isCreuxMeal } from '@/lib/creux';
 
 interface MenuItemCardProps {
   item: MenuItem;
   index: number;
+  creuxMenu?: MenuItem[];
 }
 
-const MenuItemCard = ({ item, index }: MenuItemCardProps) => {
+const MenuItemCard = ({ item, index, creuxMenu }: MenuItemCardProps) => {
+  const [showCreux, setShowCreux] = useState(false);
   const { addItem, items } = useCart();
   const [isAdding, setIsAdding] = useState(false);
   const [showSizeSelector, setShowSizeSelector] = useState(false);
@@ -30,6 +34,7 @@ const MenuItemCard = ({ item, index }: MenuItemCardProps) => {
 
   const handleAddToCart = () => {
     if (!item.en_stock_bool) return;
+    if (creuxMenu && isCreuxMeal(item)) { setShowCreux(true); return; }
 
     if (hasVariants) {
       setShowSizeSelector(true);
@@ -68,6 +73,7 @@ const MenuItemCard = ({ item, index }: MenuItemCardProps) => {
 
   return (
     <>
+      {showCreux && creuxMenu && <CreuxCustomizer item={item} menu={creuxMenu} close={() => setShowCreux(false)} />}
       <article
         className={`group relative flex min-h-[138px] overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm transition-all duration-300 opacity-0 animate-fade-in ${
           !item.en_stock_bool ? 'opacity-60' : 'hover:-translate-y-0.5 hover:shadow-card'

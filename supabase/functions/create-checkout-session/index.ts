@@ -27,8 +27,10 @@ Deno.serve(async (req) => {
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
-    // Reuse the existing server-side order function. It is the source of truth for menu prices.
-    const { data: createdOrder, error: createError } = await supabase.rpc("create_order_secure", {
+    const { data: restaurantForPricing, error: pricingError } = await supabase.from("restaurants").select("nom").eq("id", restaurantId).single();
+    if (pricingError || !restaurantForPricing) throw new Error("Restaurant introuvable");
+    const isCreux = /^au\s+(?:petit|p['’]?tit)\s+creux(?: 77)?$/i.test(restaurantForPricing.nom.trim());
+    const { data: createdOrder, error: createError } = await supabase.rpc(isCreux ? "create_creux_order_secure" : "create_order_secure", {
       p_client_name: clientName.trim(),
       p_items: items,
       p_pickup_time: pickupTime,
