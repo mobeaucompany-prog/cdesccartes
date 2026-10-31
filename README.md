@@ -1,106 +1,51 @@
-# Click & Descart
+# Click & Descartes
 
-"Agis comme un expert Full Stack. Crée une application web de Click & Collect nommée 'Click&Descartes'. L'application doit gérer deux interfaces et une base de données Supabase.
+Application Click & Collect du Campus Descartes, développée avec React, Vite, Supabase et Stripe Connect.
 
-
-
-
-1. Structure de la base de données (Supabase) :
-
-
-
-
-Une table restaurants (id, nom, statut_ouvert_ferme, photo, description).
-
-
-
-
-Une table menu_items (id, restaurant_id, nom, prix, categorie, en_stock_bool, image).
-
-
-
-
-Une table orders (id, client_name, items_list, total_price, status (pending, accepted, rejected, ready), pickup_time, created_at).
-
-
-
-
-2. Interface Client (Web App Mobile-First) :
-
-
-
-
-Page d'accueil : Liste des restaurants avec leur statut (Ouvert/Fermé).
-
-
-
-
-Page Menu : Affichage des plats par catégorie. Bouton 'Ajouter au panier'.
-
-
-
-
-Tunnel de commande : Panier, choix de l'heure de récupération, et simulation de paiement Stripe.
-
-
-
-
-Page de confirmation : Récapitulatif et statut de la commande en temps réel.
-
-
-
-
-3. Interface Restaurateur (Dashboard Web) :
-
-
-
-
-Gestion du stock : Liste des articles avec un toggle switch pour 'En rupture de stock'.
-
-
-
-
-Ajout d'article : Formulaire simple (nom, prix, image).
-
-
-
-
-Rapports de ventes : Résumé des commandes filtrable par période (5min, 1h, journée, semaine).
-
-
-
-
-4. Intégration Bot Telegram (Logique Edge Functions) :
-
-
-
-
-Configure des webhooks pour qu'à chaque nouvelle commande : a) Le bot envoie un message au restaurateur : 'Nouvelle commande de [Nom] ! [Détails]. Récupération à [Heure].' b) Propose deux boutons interactifs : '✅ Accepter' et '❌ Refuser'. c) Si 'Accepter' est cliqué, mettre à jour la table orders sur 'accepted' et notifier le client sur le site.
-
-
-
-
-Design : Utilise une charte graphique moderne : Orange (#FF4500) en couleur dominante et Anthracite (#2F2F2F) pour les textes et menus. Style épuré, boutons arrondis, photos de nourriture appétissantes."
-
-This project was built with [Lovable](https://lovable.dev).
-
-**Live app**: https://cdesccartes.lovable.app
-
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/96faa33b-b37a-4ae7-b828-66a3a0d32b1e).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+## Développement local
 
 ```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
+npm install
 npm run dev
 ```
+
+## Paiement Stripe Connect
+
+Le paiement utilise Stripe Checkout avec des **destination charges** : le client paie sur Stripe, le solde est transféré au compte Stripe connecté du restaurant et une commission plateforme peut être prélevée.
+
+### Secrets Supabase Edge Functions
+
+Configurer dans Supabase :
+
+- `STRIPE_SECRET_KEY` : clé secrète Stripe de la plateforme
+- `STRIPE_WEBHOOK_SECRET` : secret de signature du webhook Stripe
+- `APP_URL` : URL publique de l'application, par exemple `https://app.example.com`
+- `MOBEAU_PLATFORM_FEE_PERCENT` : commission Mobeau en pourcentage, par exemple `5`
+
+`SUPABASE_URL` et `SUPABASE_SERVICE_ROLE_KEY` sont fournis par l'environnement Supabase.
+
+### Compte Stripe du restaurant
+
+Chaque restaurant doit avoir son identifiant de compte Connect dans `restaurants.stripe_account_id`, par exemple `acct_...`.
+
+### Webhook Stripe
+
+Pour le projet Supabase actuel (`ugqerugkvwijqvgtmozq`), configurer Stripe pour envoyer les événements vers :
+
+`https://ugqerugkvwijqvgtmozq.supabase.co/functions/v1/stripe-webhook`
+
+Événements :
+
+- `checkout.session.completed`
+- `checkout.session.async_payment_succeeded`
+- `checkout.session.async_payment_failed`
+
+Le restaurateur ne voit pas la commande tant que le webhook n'a pas confirmé le paiement.
+
+## Sécurité des prix
+
+Le frontend n'est pas la source de vérité des montants. La fonction Edge `create-checkout-session` réutilise la fonction SQL existante `create_order_secure` afin que les prix de la commande soient validés côté serveur avant la création de la session Stripe.
+
+## Déploiement
+
+Avant le premier test réel, appliquer la migration Supabase ajoutant `stripe_account_id` et les champs de paiement, puis déployer les fonctions Edge `create-checkout-session` et `stripe-webhook`.

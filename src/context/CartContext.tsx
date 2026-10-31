@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { CartItem, MenuItem, SizeVariant } from '@/types/database';
 import { SelectedOption } from '@/types/customization';
 
@@ -15,35 +15,50 @@ interface CartContextType {
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
+const STORAGE_KEY = 'click-descartes-cart-v1';
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [items, setItems] = useState<CartItem[]>([]);
-  const [restaurantId, setRestaurantId] = useState<string | null>(null);
+  const [items, setItems] = useState<CartItem[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved ? JSON.parse(saved).items || [] : [];
+    } catch {
+      return [];
+    }
+  });
+  const [restaurantId, setRestaurantId] = useState<string | null>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved ? JSON.parse(saved).restaurantId || null : null;
+    } catch {
+      return null;
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ items, restaurantId }));
+  }, [items, restaurantId]);
 
   const addItem = useCallback((menuItem: MenuItem, variant?: SizeVariant, customizations?: SelectedOption[], customizationSupplement?: number) => {
     setItems((currentItems) => {
-      // Generate unique ID based on variant or customizations
       let itemId = menuItem.id;
       let itemPrice = menuItem.prix;
       let itemName = menuItem.nom;
-      
+
       if (variant) {
         itemId = `${menuItem.id}-${variant.name}`;
         itemPrice = variant.price;
         itemName = `${menuItem.nom} (${variant.name})`;
       }
-      
+
       if (customizations && customizations.length > 0) {
-        // Create unique ID based on customization selections
-        const customKey = customizations.map(c => c.option_name).sort().join('-');
         itemId = `${itemId || menuItem.id}-custom-${Date.now()}`;
         itemPrice = (variant ? variant.price : menuItem.prix) + (customizationSupplement || 0);
         const optionNames = customizations.map(c => c.option_name).slice(0, 3).join(', ');
         const sizeLabel = variant ? `${variant.name} - ` : '';
         itemName = `${menuItem.nom} (${sizeLabel}${optionNames}${customizations.length > 3 ? '...' : ''})`;
       }
-      
-      // For customized items, always add as new (don't merge)
+
       if (customizations && customizations.length > 0) {
         return [
           ...currentItems,
@@ -58,17 +73,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           },
         ];
       }
-      
+
       const existingItem = currentItems.find((item) => item.id === itemId);
-      
       if (existingItem) {
         return currentItems.map((item) =>
-          item.id === itemId
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
+          item.id === itemId ? { ...item, quantity: item.quantity + 1 } : item
         );
       }
-      
+
       return [
         ...currentItems,
         {
@@ -93,15 +105,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     setItems((currentItems) =>
-      currentItems.map((item) =>
-        item.id === itemId ? { ...item, quantity } : item
-      )
+      currentItems.map((item) => item.id === itemId ? { ...item, quantity } : item)
     );
   }, [removeItem]);
 
   const clearCart = useCallback(() => {
     setItems([]);
     setRestaurantId(null);
+    localStorage.removeItem(STORAGE_KEY);
   }, []);
 
   const getTotalPrice = useCallback(() => {
@@ -113,19 +124,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [items]);
 
   return (
-    <CartContext.Provider
-      value={{
-        items,
-        restaurantId,
-        addItem,
-        removeItem,
-        updateQuantity,
-        clearCart,
-        getTotalPrice,
-        getTotalItems,
-        setRestaurantId,
-      }}
-    >
+    <CartContext.Provider value={{ items, restaurantId, addItem, removeItem, updateQuantity, clearCart, getTotalPrice, getTotalItems, setRestaurantId }}>
       {children}
     </CartContext.Provider>
   );
@@ -133,8 +132,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 export const useCart = () => {
   const context = useContext(CartContext);
-  if (context === undefined) {
-    throw new Error('useCart must be used within a CartProvider');
-  }
+  if (context === undefined) throw new Error('useCart must be used within a CartProvider');
   return context;
 };

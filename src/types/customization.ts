@@ -15,6 +15,7 @@ export interface OptionGroup {
 }
 
 export interface CustomizationConfig {
+  creux_role?: 'meal' | 'soft' | 'extra';
   option_groups: OptionGroup[];
 }
 
